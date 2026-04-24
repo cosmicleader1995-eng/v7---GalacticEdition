@@ -530,7 +530,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
       <div class="card" style="margin-top:.9rem">
         <div class="sttl" style="margin-bottom:.45rem">SYSTEM STATUS</div>
         <div class="ss" id="syss">
-          N8N (orca-995): <span class="ok">CHECKING...</span><br>
+          N8N (orca-1995): <span class="ok">CHECKING...</span><br>
           GOOGLE SHEETS: <span class="ok">SYNCED</span><br>
           REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>
           AI GATEWAY: <span class="ok">ONLINE</span><br>
@@ -558,21 +558,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 
 <script>
 /* ════════════════════════════════════════════════════════
-   API — دقیقاً همون endpoints Lux+ (orca-995 preserved)
+   API — دقیقاً همون endpoints Lux+ (orca-1995 preserved)
    ════════════════════════════════════════════════════════ */
 const API = {
-  ITEMS:    'https://orca-995.app.n8n.cloud/webhook/items',
-  REMINDER: 'https://orca-995.app.n8n.cloud/webhook/reminder',
-  LOG:      'https://orca-995.app.n8n.cloud/webhook/LifeOps/log',
-  CLASSIFY: 'https://orca-995.app.n8n.cloud/webhook/ai/classify',
-  SUMMARY:  'https://orca-995.app.n8n.cloud/webhook/ai/summarize',
-  HB_ITEMS: 'https://orca-995.app.n8n.cloud/webhook/items',
+  ITEMS:    'https://orca-1995.app.n8n.cloud/webhook/items',
+  REMINDER: 'https://orca-1995.app.n8n.cloud/webhook/reminder',
+  LOG:      'https://orca-1995.app.n8n.cloud/webhook/LifeOps/log',
+  CLASSIFY: 'https://orca-1995.app.n8n.cloud/webhook/ai/classify',
+  SUMMARY:  'https://orca-1995.app.n8n.cloud/webhook/ai/summarize',
+  HB_ITEMS: 'https://orca-1995.app.n8n.cloud/webhook/items',
   // v7 additions (optional — fallback to existing if unavailable)
-  CHAT:     'https://orca-995.app.n8n.cloud/webhook/ai/chat',
-  VOICE:    'https://orca-995.app.n8n.cloud/webhook/ai/voice',
-  SCOUT:    'https://orca-995.app.n8n.cloud/webhook/scout',
-  PROFILE:  'https://orca-995.app.n8n.cloud/webhook/profile',
-  WALLET:   'https://orca-995.app.n8n.cloud/webhook/wallet',
+  CHAT:     'https://orca-1995.app.n8n.cloud/webhook/ai/chat',
+  VOICE:    'https://orca-1995.app.n8n.cloud/webhook/ai/voice',
+  SCOUT:    'https://orca-1995.app.n8n.cloud/webhook/scout',
+  PROFILE:  'https://orca-1995.app.n8n.cloud/webhook/profile',
+  WALLET:   'https://orca-1995.app.n8n.cloud/webhook/wallet',
 };
 const BOT_TOKEN = '8248107394:AAHQ_bjEDbiVwiyOd5CCzvswRPxidUU1doc';
 const CHAT_ID   = '5953981409';
@@ -639,7 +639,7 @@ async function apiFetch(url, opts={}){
 
 /* ══ LOAD LIVE ══ */
 async function loadLive(){
-  slog('SYNC → orca-995...');
+  slog('SYNC → orca-1995...');
   try {
     const d = await apiFetch(API.ITEMS+'?since_hours=168&user_id='+USER_ID);
     const arr = d.items || d || [];
@@ -656,7 +656,7 @@ async function loadLive(){
         source:   it.source || 'web',
       }));
       loaded = true;
-      updateSysStatus('N8N (orca-995): <span class="ok">ACTIVE ✓ ('+T.length+' items)</span>');
+      updateSysStatus('N8N (orca-1995): <span class="ok">ACTIVE ✓ ('+T.length+' items)</span>');
       slog('LOADED: '+T.length+' ITEMS FROM SHEETS');
       toast('✅ '+T.length+' آیتم از هسته لود شد', 'ok');
     } else {
@@ -664,7 +664,7 @@ async function loadLive(){
       loadDemoData();
     }
   } catch(e) {
-    updateSysStatus('N8N (orca-995): <span class="er">'+e.message.slice(0,30)+'</span>');
+    updateSysStatus('N8N (orca-1995): <span class="er">'+e.message.slice(0,30)+'</span>');
     slog('OFFLINE: '+e.message.slice(0,28));
     toast('⚠️ آفلاین — داده‌های نمایشی', '', 3000);
     if(T.length===0) loadDemoData();
@@ -923,7 +923,7 @@ function renderBkdn(){
 }
 
 /* ══ LOG ══ */
-const boots=['FENRIR GALACTIC BOOT','CONNECTING orca-995...','GOOGLE SHEETS → LINK','REMINDER SYS → EVERY 10M','COGNITIVE CORE → STANDBY','COSMOS ENGINE → ONLINE'];
+const boots=['FENRIR GALACTIC BOOT','CONNECTING orca-1995...','GOOGLE SHEETS → LINK','REMINDER SYS → EVERY 10M','COGNITIVE CORE → STANDBY','COSMOS ENGINE → ONLINE'];
 function slog(msg){
   const el=document.getElementById('slog'); if(!el) return;
   const t=new Date().toTimeString().slice(0,5);
@@ -934,7 +934,7 @@ function slog(msg){
 /* ══ AI ADVISORY CARD ══ */
 const advs=[
   'مغِز شب‌گردت بیداره. <em>کمتر از ۱ ساعت</em> تا خاموشی.',
-  'Second Brain در حال sync با <strong>orca-995</strong>.',
+  'Second Brain در حال sync با <strong>orca-1995</strong>.',
   'دو عدد <strong>high priority</strong> در صف رادار.',
   '<em>Wolf Pack</em> در حالت تهاجمی. بترکون فرمانده.',
   'تا پایان امروز، <strong>۳ تیر نهایی</strong> برای پاکسازی.',
@@ -1236,7 +1236,7 @@ async function aiToggleMic(){
 function aiStopRec(){ if(aiRec && aiRec.state!=='inactive') aiRec.stop() }
 
 /* ════════════════════════════════════
-   CAPTURE BAR MIC (voice → orca-995 whisper)
+   CAPTURE BAR MIC (voice → orca-1995 whisper)
    ════════════════════════════════════ */
 let capRec=null, capChunks=[];
 async function capToggleMic(){
