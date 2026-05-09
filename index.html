@@ -5,8 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000008">
 <title>LifeOps — Galactic Edition</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script>
+// Load Telegram SDK — fails gracefully if blocked
+(function() {
+  var s = document.createElement('script');
+  s.src = 'https://telegram.org/js/telegram-web-app.js';
+  s.onerror = function() { console.log('TG SDK blocked — running standalone'); };
+  document.head.appendChild(s);
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" onerror="this.remove()">
+<style>
+/* Fallback fonts for when Google Fonts is blocked */
+:root {
+  --font-orbitron: 'Orbitron', 'Courier New', monospace;
+  --font-rajdhani: 'Rajdhani', Tahoma, 'Segoe UI', sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+}
+</style>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -17,7 +33,7 @@
   --bd:rgba(155,89,255,.22);--bdg:rgba(0,255,136,.18);
   --safe:env(safe-area-inset-bottom,0px);
 }
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var(--wh);font-family:'Rajdhani',sans-serif;-webkit-font-smoothing:antialiased}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var(--wh);font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
 #cosmos{position:fixed;inset:0;z-index:0;pointer-events:none}
 .scan{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(108,47,255,.011) 3px,rgba(108,47,255,.011) 4px)}
 /* vignette for cinematic depth */
@@ -46,14 +62,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 /* energy sparks orbiting wormhole */
 .whspk{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cy);box-shadow:0 0 8px var(--cy);pointer-events:none;animation:orbspk linear infinite}
 @keyframes orbspk{from{transform:rotate(0deg) translateX(115px) rotate(0deg)}to{transform:rotate(360deg) translateX(115px) rotate(-360deg)}}
-.itl{font-family:'Orbitron',monospace;font-size:clamp(2.1rem,7.5vw,3.1rem);font-weight:900;letter-spacing:.25em;text-align:center;line-height:1;background:linear-gradient(135deg,var(--g) 0%,var(--cy) 35%,var(--vi) 65%,var(--g) 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shm 4s linear infinite,fu .8s .2s both;filter:drop-shadow(0 0 26px rgba(0,255,136,.35))}
+.itl{font-family:'Orbitron','Courier New',monospace;font-size:clamp(2.1rem,7.5vw,3.1rem);font-weight:900;letter-spacing:.25em;text-align:center;line-height:1;background:linear-gradient(135deg,var(--g) 0%,var(--cy) 35%,var(--vi) 65%,var(--g) 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shm 4s linear infinite,fu .8s .2s both;filter:drop-shadow(0 0 26px rgba(0,255,136,.35))}
 @keyframes shm{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 @keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.isub{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.4em;color:rgba(155,89,255,.58);margin-top:.45rem;text-align:center;animation:fu .8s .4s both}
-.itag{font-family:'Rajdhani',sans-serif;font-size:clamp(.88rem,2.7vw,1.02rem);font-weight:300;color:rgba(232,240,255,.5);text-align:center;margin-top:.4rem;animation:fu .8s .6s both;direction:rtl}
+.isub{font-family:'Share Tech Mono','Courier New',monospace;font-size:.7rem;letter-spacing:.4em;color:rgba(155,89,255,.58);margin-top:.45rem;text-align:center;animation:fu .8s .4s both}
+.itag{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:clamp(.88rem,2.7vw,1.02rem);font-weight:300;color:rgba(232,240,255,.5);text-align:center;margin-top:.4rem;animation:fu .8s .6s both;direction:rtl}
 .itag em{color:var(--g);font-style:normal;font-weight:600}
 .itag strong{color:var(--vi);font-weight:600}
-.enb{margin-top:2.2rem;position:relative;display:inline-flex;align-items:center;gap:.7rem;padding:.9rem 2.3rem;border:1px solid rgba(0,255,136,.45);background:rgba(0,255,136,.06);color:var(--g);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:.22em;cursor:pointer;overflow:hidden;animation:fu .8s .9s both,bg 3s 2s ease-in-out infinite;transition:all .25s}
+.enb{margin-top:2.2rem;position:relative;display:inline-flex;align-items:center;gap:.7rem;padding:.9rem 2.3rem;border:1px solid rgba(0,255,136,.45);background:rgba(0,255,136,.06);color:var(--g);font-family:'Orbitron','Courier New',monospace;font-size:.68rem;font-weight:700;letter-spacing:.22em;cursor:pointer;overflow:hidden;animation:fu .8s .9s both,bg 3s 2s ease-in-out infinite;transition:all .25s}
 @keyframes bg{0%,100%{box-shadow:0 0 10px rgba(0,255,136,.22)}50%{box-shadow:0 0 34px rgba(0,255,136,.55),0 0 70px rgba(0,255,136,.22)}}
 .enb::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,255,136,.15),transparent);transform:translateX(-100%);transition:transform .5s}
 .enb:hover::before{transform:translateX(100%)}
@@ -69,17 +85,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .tb{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 .9rem;height:52px;background:rgba(4,0,30,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);box-shadow:0 1px 22px rgba(108,47,255,.15)}
 .brand{display:flex;align-items:center;gap:7px}
 .wico{width:28px;height:28px;flex-shrink:0;filter:drop-shadow(0 0 6px var(--pu))}
-.bn{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;letter-spacing:.18em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.bv{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:rgba(155,89,255,.45);margin-top:1px}
+.bn{font-family:'Orbitron','Courier New',monospace;font-size:.82rem;font-weight:900;letter-spacing:.18em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.bv{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:2px;color:rgba(155,89,255,.45);margin-top:1px}
 .tbr{display:flex;align-items:center;gap:7px}
-.lp{display:flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid rgba(0,255,136,.22);background:rgba(0,255,136,.05);font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:var(--g)}
+.lp{display:flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid rgba(0,255,136,.22);background:rgba(0,255,136,.05);font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:1.5px;color:var(--g)}
 .ld{width:5px;height:5px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:ld 1.5s infinite}
 @keyframes ld{0%,100%{opacity:1}50%{opacity:.3}}
-.clk{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;color:var(--g);letter-spacing:2px;text-shadow:0 0 15px rgba(0,255,136,.55)}
+.clk{font-family:'Orbitron','Courier New',monospace;font-size:.78rem;font-weight:700;color:var(--g);letter-spacing:2px;text-shadow:0 0 15px rgba(0,255,136,.55)}
 
 /* TABS */
 .tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--bd);background:rgba(4,0,30,.95)}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 3px;font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.35);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;text-transform:uppercase}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 3px;font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.35);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;text-transform:uppercase}
 .tab.on{color:var(--vi);border-bottom-color:var(--pu);background:rgba(155,89,255,.05)}
 .tic{font-size:14px;line-height:1}
 
@@ -91,7 +107,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 
 /* CAPTURE BAR */
 .capbar{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:7px .9rem;padding-bottom:calc(7px + var(--safe));background:rgba(4,0,30,.98);border-top:1px solid var(--bd)}
-.cap-in{flex:1;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono',monospace;font-size:10.5px;padding:8px 10px;outline:none;direction:rtl;letter-spacing:.5px;transition:all .2s;min-width:0}
+.cap-in{flex:1;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:10.5px;padding:8px 10px;outline:none;direction:rtl;letter-spacing:.5px;transition:all .2s;min-width:0}
 .cap-in::placeholder{color:rgba(155,89,255,.3);font-size:10px}
 .cap-in:focus{border-color:var(--pu);background:rgba(155,89,255,.1)}
 .mbtns{display:flex;gap:4px;flex-shrink:0}
@@ -105,19 +121,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .mb.g:active{background:rgba(0,255,136,.18)}
 .mb.ai{border-color:rgba(192,132,252,.35);background:rgba(192,132,252,.08)}
 .mb.ai:active{background:rgba(192,132,252,.22)}
-.fb{padding:8px 10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .18s;flex-shrink:0}
+.fb{padding:8px 10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron','Courier New',monospace;font-size:.58rem;font-weight:700;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .18s;flex-shrink:0}
 .fb:active{background:rgba(155,89,255,.28);transform:scale(.95)}
 .fb.loading{color:rgba(155,89,255,.5);cursor:not-allowed}
 .hi{display:none}
 
 /* ══ SHARED ══ */
-.sttl{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.2em;color:var(--pu);text-transform:uppercase;margin-bottom:.8rem;padding-bottom:.45rem;border-bottom:1px solid rgba(155,89,255,.12);display:flex;align-items:center;gap:6px}
+.sttl{font-family:'Orbitron','Courier New',monospace;font-size:.6rem;font-weight:700;letter-spacing:.2em;color:var(--pu);text-transform:uppercase;margin-bottom:.8rem;padding-bottom:.45rem;border-bottom:1px solid rgba(155,89,255,.12);display:flex;align-items:center;gap:6px}
 .sttl::before{content:'';width:3px;height:11px;background:linear-gradient(180deg,var(--g),var(--pu));border-radius:2px;flex-shrink:0}
 .card{background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;padding:.9rem;margin-bottom:.7rem;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(155,89,255,.45),transparent)}
 
 /* TOAST */
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:200;background:rgba(6,0,36,.97);border:1px solid var(--pu);border-radius:4px;padding:8px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--vi);letter-spacing:1px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:200;background:rgba(6,0,36,.97);border:1px solid var(--pu);border-radius:4px;padding:8px 16px;font-family:'Share Tech Mono','Courier New',monospace;font-size:10px;color:var(--vi);letter-spacing:1px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.ok{border-color:var(--g);color:var(--g)}
 .toast.err{border-color:var(--re);color:var(--re)}
@@ -126,11 +142,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .srow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:.9rem}
 .sbox{background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;padding:10px 7px;text-align:center;position:relative;overflow:hidden}
 .sbox::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pu),transparent);opacity:.32}
-.sv{font-family:'Orbitron',monospace;font-size:1.48rem;font-weight:700;line-height:1;margin-bottom:3px}
+.sv{font-family:'Orbitron','Courier New',monospace;font-size:1.48rem;font-weight:700;line-height:1;margin-bottom:3px}
 .sv.r{color:var(--re);text-shadow:0 0 20px rgba(255,68,102,.55)}
 .sv.g{color:var(--g);text-shadow:0 0 20px rgba(0,255,136,.55)}
 .sv.p{color:var(--vi);text-shadow:0 0 20px rgba(192,132,252,.55)}
-.sl{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1.5px;color:rgba(232,240,255,.25)}
+.sl{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1.5px;color:rgba(232,240,255,.25)}
 .rw{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:.9rem}
 .rw::before{content:'';position:absolute;inset:-18px;background:radial-gradient(ellipse at center,rgba(108,47,255,.13) 0%,rgba(0,255,136,.05) 40%,transparent 75%);pointer-events:none;animation:rwgl 4s ease-in-out infinite}
 @keyframes rwgl{0%,100%{opacity:.7}50%{opacity:1}}
@@ -139,9 +155,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 /* BLIP TOOLTIP */
 .btt{position:fixed;z-index:999;background:rgba(4,0,30,.97);border:1px solid var(--pu);border-radius:4px;padding:8px 11px;min-width:150px;max-width:230px;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s,transform .18s;box-shadow:0 4px 22px rgba(108,47,255,.35)}
 .btt.show{opacity:1;transform:none}
-.bt-ty{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(155,89,255,.55);margin-bottom:3px}
-.bt-tx{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.92);direction:rtl;text-align:right;line-height:1.35}
-.bt-pr{font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:4px}
+.bt-ty{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(155,89,255,.55);margin-bottom:3px}
+.bt-tx{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.92);direction:rtl;text-align:right;line-height:1.35}
+.bt-pr{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;margin-top:4px}
 
 /* AI CARD + CHAT */
 .aic{background:rgba(4,0,30,.95);border:1px solid var(--bd);border-radius:4px;padding:.75rem;display:flex;gap:9px;margin-bottom:.9rem;position:relative;overflow:hidden}
@@ -149,15 +165,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 @keyframes aicsh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .aiw{width:30px;height:30px;flex-shrink:0;border:1px solid rgba(155,89,255,.45);display:flex;align-items:center;justify-content:center;background:rgba(155,89,255,.07);font-size:13px;border-radius:3px;animation:wp 3s ease-in-out infinite}
 @keyframes wp{0%,100%{box-shadow:0 0 6px rgba(155,89,255,.35)}50%{box-shadow:0 0 18px rgba(155,89,255,.75),0 0 34px rgba(0,255,136,.15)}}
-.ait{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2.5px;color:rgba(155,89,255,.45);margin-bottom:3px}
-.aim{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:400;color:rgba(232,240,255,.68);line-height:1.5;direction:rtl;text-align:right;min-height:34px;transition:opacity .28s}
+.ait{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:2.5px;color:rgba(155,89,255,.45);margin-bottom:3px}
+.aim{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:12px;font-weight:400;color:rgba(232,240,255,.68);line-height:1.5;direction:rtl;text-align:right;min-height:34px;transition:opacity .28s}
 .aim em{color:var(--g);font-style:normal;font-weight:600}
 .aim strong{color:var(--vi);font-weight:600}
 .aim .typing::after{content:'|';animation:bc .6s infinite}
 @keyframes bc{0%,100%{opacity:1}50%{opacity:0}}
 
 /* AI CHAT OPEN BUTTON */
-.aibtn{width:100%;background:linear-gradient(135deg,rgba(155,89,255,.1),rgba(0,212,255,.08));border:1px solid rgba(155,89,255,.35);border-radius:4px;color:var(--vi);font-family:'Orbitron',monospace;font-size:.64rem;font-weight:700;letter-spacing:.15em;padding:11px;cursor:pointer;transition:all .2s;margin-bottom:.9rem;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
+.aibtn{width:100%;background:linear-gradient(135deg,rgba(155,89,255,.1),rgba(0,212,255,.08));border:1px solid rgba(155,89,255,.35);border-radius:4px;color:var(--vi);font-family:'Orbitron','Courier New',monospace;font-size:.64rem;font-weight:700;letter-spacing:.15em;padding:11px;cursor:pointer;transition:all .2s;margin-bottom:.9rem;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
 .aibtn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(155,89,255,.12),transparent);transform:translateX(-100%);transition:transform .6s}
 .aibtn:hover::before{transform:translateX(100%)}
 .aibtn:active{transform:scale(.98);background:rgba(155,89,255,.18)}
@@ -166,42 +182,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .aipanel{position:fixed;inset:0;z-index:180;background:rgba(0,0,8,.92);backdrop-filter:blur(18px);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
 .aipanel.show{opacity:1;pointer-events:all}
 .aih{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bd);background:rgba(4,0,30,.95)}
-.aihb{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;letter-spacing:.2em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.aihb{font-family:'Orbitron','Courier New',monospace;font-size:.72rem;font-weight:900;letter-spacing:.2em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .aihx{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);border-radius:3px;color:var(--re);cursor:pointer;font-size:14px}
 .aihx:active{background:rgba(255,68,102,.2)}
 .ailog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 .ailog::-webkit-scrollbar{width:3px}
 .ailog::-webkit-scrollbar-thumb{background:rgba(155,89,255,.3)}
-.aimsg{max-width:82%;padding:10px 13px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:13px;line-height:1.55;direction:rtl;text-align:right;animation:aimsgIn .25s ease}
+.aimsg{max-width:82%;padding:10px 13px;border-radius:4px;font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;line-height:1.55;direction:rtl;text-align:right;animation:aimsgIn .25s ease}
 @keyframes aimsgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .aimsg.u{align-self:flex-start;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--wh)}
 .aimsg.b{align-self:flex-end;background:rgba(155,89,255,.1);border:1px solid rgba(155,89,255,.3);color:var(--wh)}
 .aimsg.b strong{color:var(--g);font-weight:600}
 .aimsg.b em{color:var(--vi);font-style:normal;font-weight:600}
-.aimsg .mtag{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:8px;padding:1px 5px;border:1px solid currentColor;border-radius:1px;margin-inline-end:4px;letter-spacing:1px;opacity:.7}
+.aimsg .mtag{display:inline-block;font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;padding:1px 5px;border:1px solid currentColor;border-radius:1px;margin-inline-end:4px;letter-spacing:1px;opacity:.7}
 .aityp{align-self:flex-end;display:inline-flex;gap:4px;padding:10px 13px;background:rgba(155,89,255,.08);border:1px solid rgba(155,89,255,.25);border-radius:4px}
 .aityp span{width:5px;height:5px;border-radius:50%;background:var(--vi);animation:typB 1.2s infinite}
 .aityp span:nth-child(2){animation-delay:.2s}
 .aityp span:nth-child(3){animation-delay:.4s}
 @keyframes typB{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 .aiibar{flex-shrink:0;display:flex;gap:5px;align-items:center;padding:10px 14px;padding-bottom:calc(10px + var(--safe));background:rgba(4,0,30,.98);border-top:1px solid var(--bd)}
-.aii{flex:1;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Rajdhani',sans-serif;font-size:13px;padding:10px 11px;outline:none;direction:rtl;min-width:0}
+.aii{flex:1;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;padding:10px 11px;outline:none;direction:rtl;min-width:0}
 .aii:focus{border-color:var(--pu)}
 .aii::placeholder{color:rgba(155,89,255,.3);font-size:12px}
-.aisb{padding:10px 15px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.35);border-radius:3px;color:var(--g);font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;flex-shrink:0}
+.aisb{padding:10px 15px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.35);border-radius:3px;color:var(--g);font-family:'Orbitron','Courier New',monospace;font-size:.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;flex-shrink:0}
 .aisb:active{transform:scale(.95)}
 .aimic{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.25);border-radius:3px;cursor:pointer;font-size:15px;color:var(--cy)}
 .aimic:active{transform:scale(.92)}
 .aimic.rec{background:rgba(255,68,102,.18);border-color:var(--re);color:var(--re);animation:recpul 1s infinite}
 .aiatt{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.2);border-radius:3px;cursor:pointer;font-size:14px;color:var(--vi)}
 .aiatt:active{transform:scale(.92)}
-.aipv{align-self:flex-start;display:flex;gap:6px;align-items:center;padding:6px 10px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.25);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--cy);max-width:82%}
+.aipv{align-self:flex-start;display:flex;gap:6px;align-items:center;padding:6px 10px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.25);border-radius:3px;font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--cy);max-width:82%}
 .aipv img{max-width:120px;max-height:80px;border-radius:2px}
 
 /* ══ PAGE 1 — MISSIONS ══ */
 .frow{display:flex;gap:4px;margin-bottom:.85rem;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}
 .frow::-webkit-scrollbar{display:none}
-.fp{padding:3px 9px;flex-shrink:0;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;border:1px solid rgba(155,89,255,.2);color:rgba(155,89,255,.4);cursor:pointer;transition:all .18s;border-radius:2px;white-space:nowrap}
+.fp{padding:3px 9px;flex-shrink:0;font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:1px;border:1px solid rgba(155,89,255,.2);color:rgba(155,89,255,.4);cursor:pointer;transition:all .18s;border-radius:2px;white-space:nowrap}
 .fp.on{border-color:var(--pu);color:var(--vi);background:rgba(155,89,255,.1)}
 .msn{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid rgba(155,89,255,.07);position:relative;animation:si .22s both;cursor:pointer;transition:background .12s,padding-right .12s}
 @keyframes si{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
@@ -215,16 +231,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .pn{background:var(--am);box-shadow:0 0 6px rgba(255,183,0,.55)}
 .pl{background:rgba(0,255,136,.55)}
 .mb2{flex:1;min-width:0}
-.mt{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;color:rgba(232,240,255,.9);line-height:1.32;direction:rtl;text-align:right}
+.mt{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;font-weight:500;color:rgba(232,240,255,.9);line-height:1.32;direction:rtl;text-align:right}
 .mf{display:flex;gap:4px;margin-top:4px;justify-content:flex-end;flex-wrap:wrap}
-.mty{font-family:'Share Tech Mono',monospace;font-size:7.5px;letter-spacing:1px;padding:1px 5px;border:1px solid;border-radius:1px}
-.mtg{font-family:'Share Tech Mono',monospace;font-size:7.5px;letter-spacing:1px;padding:1px 5px;border:1px solid rgba(155,89,255,.18);color:rgba(155,89,255,.45)}
-.mck{width:18px;height:18px;border:1px solid rgba(155,89,255,.35);background:transparent;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;color:transparent;font-size:9px;transition:all .18s;border-radius:2px}
-.mck:active{transform:scale(.88)}
-.msn.done .mck{border-color:var(--g);background:rgba(0,255,136,.12);color:var(--g)}
+.mty{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:1px;padding:1px 5px;border:1px solid;border-radius:1px}
+.mtg{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:1px;padding:1px 5px;border:1px solid rgba(155,89,255,.18);color:rgba(155,89,255,.45)}
+.mck{width:28px;height:28px;min-width:28px;border:1.5px solid rgba(155,89,255,.55);background:rgba(155,89,255,.04);cursor:pointer;flex-shrink:0;margin-top:0;display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;font-weight:700;transition:all .15s;border-radius:4px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+.mck:active{transform:scale(.82);background:rgba(0,255,136,.18);border-color:var(--g)}
+.msn.done .mck{border-color:var(--g);background:rgba(0,255,136,.18);color:var(--g)}
 
 /* ══ PAGE 2 — VAULT ══ */
-.vs{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.22);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono',monospace;font-size:10.5px;padding:8px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.85rem;transition:all .2s}
+.vs{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.22);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:10.5px;padding:8px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.85rem;transition:all .2s}
 .vs::placeholder{color:rgba(155,89,255,.28)}
 .vs:focus{border-color:var(--pu);background:rgba(155,89,255,.09)}
 .vg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:.9rem}
@@ -232,42 +248,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .vc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pu),transparent);opacity:.45}
 .vc:active{transform:scale(.96);background:rgba(155,89,255,.1)}
 .vci{font-size:18px;margin-bottom:5px;display:block}
-.vcl{font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;color:var(--vi);display:block;margin-bottom:2px}
-.vcn{font-family:'Share Tech Mono',monospace;font-size:.88rem;font-weight:700;color:var(--wh)}
-.vcs{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.25)}
+.vcl{font-family:'Orbitron','Courier New',monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;color:var(--vi);display:block;margin-bottom:2px}
+.vcn{font-family:'Share Tech Mono','Courier New',monospace;font-size:.88rem;font-weight:700;color:var(--wh)}
+.vcs{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.25)}
 .vi{padding:8px 0;border-bottom:1px solid rgba(155,89,255,.07);cursor:pointer;transition:all .12s}
 .vi:active{padding-right:5px}
-.vit{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.8);direction:rtl;text-align:right;line-height:1.3;margin-bottom:3px}
+.vit{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.8);direction:rtl;text-align:right;line-height:1.3;margin-bottom:3px}
 .vim{display:flex;gap:4px;justify-content:flex-end}
-.vid{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.38)}
+.vid{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.38)}
 
 /* ══ PAGE 3 — INTEL ══ */
 .rcard{background:rgba(6,0,36,.88);border:1px solid rgba(255,183,0,.25);border-radius:4px;padding:.9rem;margin-bottom:.7rem;position:relative;overflow:hidden}
 .rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--am),transparent)}
 .rtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
-.rbg{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.14em;padding:4px 9px;border:1px solid var(--am);color:var(--am);background:rgba(255,183,0,.06);text-shadow:0 0 10px rgba(255,183,0,.55)}
-.xpt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--vi);letter-spacing:1.5px}
+.rbg{font-family:'Orbitron','Courier New',monospace;font-size:.6rem;font-weight:700;letter-spacing:.14em;padding:4px 9px;border:1px solid var(--am);color:var(--am);background:rgba(255,183,0,.06);text-shadow:0 0 10px rgba(255,183,0,.55)}
+.xpt{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--vi);letter-spacing:1.5px}
 .xpb{width:100%;height:6px;background:rgba(155,89,255,.08);border-radius:3px;overflow:hidden;position:relative}
 .xpf{height:100%;background:linear-gradient(90deg,var(--g),var(--cy),var(--vi));border-radius:3px;transition:width 1.5s cubic-bezier(.4,0,.2,1);box-shadow:0 0 10px rgba(0,255,136,.5);position:relative}
 .xpf::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:xpsh 2s linear infinite}
 @keyframes xpsh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-.xpl{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(232,240,255,.3);margin-top:6px;letter-spacing:1.5px}
+.xpl{display:flex;justify-content:space-between;font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;color:rgba(232,240,255,.3);margin-top:6px;letter-spacing:1.5px}
 .skr{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:.7rem}
 .skb{background:rgba(6,0,36,.85);border:1px solid var(--bd);border-radius:4px;padding:9px 8px;text-align:center;position:relative;overflow:hidden}
 .skb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pu),transparent);opacity:.4}
-.skn{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--g);text-shadow:0 0 15px rgba(0,255,136,.5)}
-.skl{font-family:'Share Tech Mono',monospace;font-size:7.5px;letter-spacing:1.5px;color:rgba(232,240,255,.35);margin-top:3px}
+.skn{font-family:'Orbitron','Courier New',monospace;font-size:1.2rem;font-weight:700;color:var(--g);text-shadow:0 0 15px rgba(0,255,136,.5)}
+.skl{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:1.5px;color:rgba(232,240,255,.35);margin-top:3px}
 .bkd{display:flex;align-items:center;gap:7px;padding:5px 0}
 .bkc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.bkl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:rgba(232,240,255,.6);flex:1}
-.bkv{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--vi);font-weight:700}
+.bkl{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;letter-spacing:1px;color:rgba(232,240,255,.6);flex:1}
+.bkv{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--vi);font-weight:700}
 .ll{max-height:145px;overflow-y:auto;padding:4px 0}
 .ll::-webkit-scrollbar{width:2px}
 .ll::-webkit-scrollbar-thumb{background:rgba(155,89,255,.25)}
 .lr{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid rgba(155,89,255,.05);animation:li .28s ease}
 @keyframes li{from{opacity:0;transform:translateX(4px)}to{opacity:1;transform:none}}
-.lt{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(155,89,255,.35);flex-shrink:0;padding-top:1px}
-.lm{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(232,240,255,.4);line-height:1.4;direction:rtl;text-align:right}
+.lt{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;color:rgba(155,89,255,.35);flex-shrink:0;padding-top:1px}
+.lm{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:rgba(232,240,255,.4);line-height:1.4;direction:rtl;text-align:right}
 
 /* ══ PAGE 4 — OPS ══ */
 .ucrd{background:rgba(6,0,36,.92);border:1px solid var(--bd);border-radius:4px;padding:.9rem;margin-bottom:.7rem;display:flex;align-items:center;gap:11px;position:relative;overflow:hidden}
@@ -277,18 +293,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .uav::after{content:'📷';position:absolute;inset:0;background:rgba(0,0,8,.7);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%}
 .uav:hover::after{display:flex}
 .uinfo{flex:1;min-width:0}
-.un{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;color:var(--vi)}
-.ur{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.32);margin-top:3px}
-.ubio{font-family:'Rajdhani',sans-serif;font-size:11px;color:rgba(232,240,255,.55);margin-top:5px;direction:rtl;cursor:pointer;line-height:1.4;padding:3px 5px;border-radius:2px;transition:background .2s;min-height:18px}
+.un{font-family:'Orbitron','Courier New',monospace;font-size:.78rem;font-weight:700;color:var(--vi)}
+.ur{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.32);margin-top:3px}
+.ubio{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:11px;color:rgba(232,240,255,.55);margin-top:5px;direction:rtl;cursor:pointer;line-height:1.4;padding:3px 5px;border-radius:2px;transition:background .2s;min-height:18px}
 .ubio:hover{background:rgba(155,89,255,.05)}
 .ubio[contenteditable="true"]{background:rgba(155,89,255,.1);outline:1px solid var(--pu);color:var(--wh)}
 .ubio:empty::before{content:'بیو خودت رو بنویس...';color:rgba(155,89,255,.4);font-style:italic}
 .ustat{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
 .ustat .sb{background:rgba(4,0,30,.6);border:1px solid rgba(155,89,255,.15);padding:5px 3px;text-align:center;border-radius:2px}
-.ustat .sv{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;color:var(--g)}
-.ustat .sl{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.3)}
+.ustat .sv{font-family:'Orbitron','Courier New',monospace;font-size:.72rem;font-weight:700;color:var(--g)}
+.ustat .sl{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.3)}
 
-.opb{width:100%;padding:11px 13px;cursor:pointer;transition:all .18s;background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;color:rgba(155,89,255,.62);font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;position:relative;overflow:hidden}
+.opb{width:100%;padding:11px 13px;cursor:pointer;transition:all .18s;background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;color:rgba(155,89,255,.62);font-family:'Share Tech Mono','Courier New',monospace;font-size:9.5px;letter-spacing:1.5px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;position:relative;overflow:hidden}
 .opb::before{content:'';position:absolute;right:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,transparent,rgba(155,89,255,.08));transition:width .28s}
 .opb:active::before{width:100%}
 .opb:active{border-color:var(--pu);color:var(--vi)}
@@ -298,7 +314,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .opb.a{border-color:rgba(255,183,0,.18);color:rgba(255,183,0,.52)}
 .opb.a:active{border-color:var(--am);color:var(--am)}
 .opa{opacity:.4;font-size:11px}
-.ss{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(155,89,255,.4);line-height:1.85;direction:ltr;text-align:left}
+.ss{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:rgba(155,89,255,.4);line-height:1.85;direction:ltr;text-align:left}
 .ss .ok{color:var(--g)} .ss .w{color:var(--am)} .ss .er{color:var(--re)}
 
 /* REMINDER/REPORT MODAL */
@@ -306,16 +322,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .modal.show{opacity:1;pointer-events:all}
 .modal-box{width:100%;max-width:480px;max-height:86vh;overflow-y:auto;background:rgba(6,0,36,.98);border:1px solid var(--bd);border-radius:12px 12px 0 0;padding:1.5rem;padding-bottom:calc(1.5rem + var(--safe));transform:translateY(20px);transition:transform .25s}
 .modal.show .modal-box{transform:none}
-.modal-ttl{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:.2em;color:var(--pu);margin-bottom:1rem}
-.minp{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono',monospace;font-size:11px;padding:9px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.6rem;transition:all .2s}
+.modal-ttl{font-family:'Orbitron','Courier New',monospace;font-size:.72rem;font-weight:700;letter-spacing:.2em;color:var(--pu);margin-bottom:1rem}
+.minp{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:11px;padding:9px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.6rem;transition:all .2s}
 .minp:focus{border-color:var(--pu);background:rgba(155,89,255,.09)}
 .minp::placeholder{color:rgba(155,89,255,.3);font-size:10px}
 .mrow{display:flex;gap:.5rem;margin-top:.6rem}
-.mok{flex:1;padding:10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;cursor:pointer;transition:all .18s}
+.mok{flex:1;padding:10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron','Courier New',monospace;font-size:.62rem;font-weight:700;cursor:pointer;transition:all .18s}
 .mok:active{background:rgba(155,89,255,.28)}
-.mcn{flex:1;padding:10px;background:transparent;border:1px solid rgba(155,89,255,.2);border-radius:3px;color:rgba(155,89,255,.48);font-family:'Share Tech Mono',monospace;font-size:.62rem;cursor:pointer;transition:all .18s}
+.mcn{flex:1;padding:10px;background:transparent;border:1px solid rgba(155,89,255,.2);border-radius:3px;color:rgba(155,89,255,.48);font-family:'Share Tech Mono','Courier New',monospace;font-size:.62rem;cursor:pointer;transition:all .18s}
 .mcn:active{border-color:var(--re);color:var(--re)}
-.rpbody{font-family:'Rajdhani',sans-serif;font-size:13px;color:rgba(232,240,255,.85);line-height:1.7;direction:rtl;text-align:right;white-space:pre-wrap;max-height:50vh;overflow-y:auto;padding:10px;background:rgba(4,0,30,.6);border:1px solid var(--bd);border-radius:3px;margin-bottom:.8rem}
+.rpbody{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;color:rgba(232,240,255,.85);line-height:1.7;direction:rtl;text-align:right;white-space:pre-wrap;max-height:50vh;overflow-y:auto;padding:10px;background:rgba(4,0,30,.6);border:1px solid var(--bd);border-radius:3px;margin-bottom:.8rem}
 
 /* DOPAMINE PARTICLES */
 .dpar{position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:999;animation:dparB .9s ease-out forwards}
@@ -524,8 +540,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
       <button class="opb g" id="btn-weekly" onclick="opWeekly(this)"><span>📈 گزارش هفتگی Wolf Pack</span><span class="opa">↗</span></button>
       <button class="opb a" id="btn-scout" onclick="opScout(this)"><span>🛩️ پهپاد شناسایی Scout Drone</span><span class="opa">↗</span></button>
       <button class="opb" id="btn-sync" onclick="opSync(this)"><span>🔄 همگام‌سازی Google Sheets</span><span class="opa">↗</span></button>
-      <button class="opb" onclick="openModal()"><span>⏰ یادآور جدید با تاریخ</span><span class="opa">↗</span></button>
-      <button class="opb a" id="btn-cls" onclick="opClassifyModal(this)"><span>🧠 AI Classify — تحلیل سریع متن</span><span class="opa">↗</span></button>
+      <button class="opb" onclick="openModal()"><span>⏰ یادآور </span><span class="opa">↗</span></button>
+      <button class="opb a" id="btn-cls" onclick="opClassifyModal(this)"><span>🧠 AI Classify </span><span class="opa">↗</span></button>
       <button class="opb" style="border-color:rgba(255,68,102,.18);color:rgba(255,68,102,.52)" onclick="opClr()"><span>🗑️ پاکسازی ماموریت‌های تموم شده</span><span class="opa">↗</span></button>
       <div class="card" style="margin-top:.9rem">
         <div class="sttl" style="margin-bottom:.45rem">SYSTEM STATUS</div>
@@ -560,38 +576,46 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 /* ════════════════════════════════════════════════════════
    API — دقیقاً همون endpoints Lux+ (orca-9595 preserved)
    ════════════════════════════════════════════════════════ */
+// ════════════════════════════════════════════════════════
+// CONFIG — orca-9595 (production instance)
+// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// ⚙️  CONFIG — فقط این خط رو عوض کن
+// لوکال:  http://localhost:5678/webhook
+// Cloud:  https://orca-9595.app.n8n.cloud/webhook
+// بله:    http://YOUR-SERVER-IP:5678/webhook
+// ══════════════════════════════════════════════════════
+const N8N = 'https://orca-9595.app.n8n.cloud/webhook';
 const API = {
-  ITEMS:    'https://orca-9595.app.n8n.cloud/webhook/items',
-  REMINDER: 'https://orca-9595.app.n8n.cloud/webhook/reminder',
-  LOG:      'https://orca-9595.app.n8n.cloud/webhook/LifeOps/log',
-  CLASSIFY: 'https://orca-9595.app.n8n.cloud/webhook/ai/classify',
-  SUMMARY:  'https://orca-9595.app.n8n.cloud/webhook/ai/summarize',
-  HB_ITEMS: 'https://orca-9595.app.n8n.cloud/webhook/items',
-  // v7 additions (optional — fallback to existing if unavailable)
-  CHAT:     'https://orca-9595.app.n8n.cloud/webhook/ai/chat',
-  VOICE:    'https://orca-9595.app.n8n.cloud/webhook/ai/voice',
-  SCOUT:    'https://orca-9595.app.n8n.cloud/webhook/scout',
-  PROFILE:  'https://orca-9595.app.n8n.cloud/webhook/profile',
-  WALLET:   'https://orca-9595.app.n8n.cloud/webhook/wallet',
+  // ▶ MAIN INBOUND — Scout Drone pipeline (text/classify/AI/DB)
+  INBOUND:  N8N + '/telegram/lifeops_inbound',
+  // ▶ DATA VAULT — Second Brain v3 (read items from Google Sheets)
+  ITEMS:    N8N + '/items',
+  // ▶ REMINDER SYSTEM — SSA Reminder Receiver v2
+  REMINDER: N8N + '/reminder',
+  // ▶ AI GATEWAY — classify only (no full pipeline)
+  CLASSIFY: N8N + '/ai/classify',
+  // ▶ AI SUMMARIZE — daily/weekly reports
+  SUMMARY:  N8N + '/ai/summarize',
+  // ▶ LOGGING
+  LOG:      N8N + '/LifeOps/log',
 };
 const BOT_TOKEN = '8248107394:AAHQ_bjEDbiVwiyOd5CCzvswRPxidUU1doc';
-const CHAT_ID   = '5953981409';
-let   XP_CUR   = 2840, XP_MAX = 5000, STREAK = 23;
+const DEFAULT_CHAT_ID = '5953981409';
+let USER_ID = DEFAULT_CHAT_ID;
+let XP_CUR = 0, XP_MAX = 5000, STREAK = 0;
 
 /* ══ TELEGRAM SDK ══ */
 const tg = window.Telegram?.WebApp;
-let USER_ID = CHAT_ID;
-if(tg){
+if (tg) {
   tg.ready(); tg.expand();
-  tg.setHeaderColor('#04001e');
-  tg.setBackgroundColor('#000008');
+  tg.setHeaderColor?.('#04001e');
+  tg.setBackgroundColor?.('#000008');
   const u = tg.initDataUnsafe?.user;
-  if(u){
+  if (u) {
     USER_ID = String(u.id);
     document.getElementById('uname').textContent = (u.first_name||'')+(u.last_name?' '+u.last_name:'');
-    if(u.photo_url){
-      document.getElementById('uav').innerHTML = `<img src="${u.photo_url}" alt="">`;
-    }
+    if (u.photo_url) document.getElementById('uav').innerHTML = `<img src="${u.photo_url}" alt="">`;
   }
 }
 const H  = t => tg?.HapticFeedback?.impactOccurred(t||'light');
@@ -637,74 +661,93 @@ async function apiFetch(url, opts={}){
   } catch(e) { throw e }
 }
 
-/* ══ LOAD LIVE ══ */
+/* ══ LOAD LIVE — reads from Second Brain v3 (Google Sheets via n8n) ══ */
 async function loadLive(){
-  slog('SYNC → orca-9595...');
+  slog('SYNC → orca-9595 Sheets...');
   try {
-    const d = await apiFetch(API.ITEMS+'?since_hours=168&user_id='+USER_ID);
-    const arr = d.items || d || [];
-    if(Array.isArray(arr) && arr.length > 0){
-      T = arr.map(it=>({
-        id:       it.id || it.item_id,
-        text:     it.content || '',
-        type:     it.item_type || 'note',
-        priority: it.priority || 'normal',
-        done:     it.status==='done',
-        tags:     (()=>{ try{ return JSON.parse(it.tags_json||'[]') }catch{ return Array.isArray(it.tags)?it.tags:(it.tags?String(it.tags).split(','):[]) } })(),
-        ts:       new Date(it.created_at||Date.now()).getTime(),
-        external_id: it.external_id || String(it.id||it.item_id),
-        source:   it.source || 'web',
+    // Second Brain v3: GET /items?since_hours=168
+    // Returns { found: bool, items: [...], existing_id: null }
+    const d = await apiFetch(API.ITEMS + '?since_hours=168');
+    
+    // Parse Second Brain v3 response format
+    let arr = [];
+    if (d && Array.isArray(d.items) && d.items.length > 0) {
+      arr = d.items;
+    } else if (d && d.found === true && Array.isArray(d.items)) {
+      arr = d.items;
+    } else if (Array.isArray(d) && d.length > 0) {
+      arr = d;
+    }
+
+    if (arr.length > 0) {
+      T = arr.map(it => ({
+        id:          it.id || String(Date.now() + Math.random()),
+        text:        it.content || '',
+        type:        it.item_type || 'note',
+        priority:    it.priority || 'normal',
+        done:        (it.status === 'done'),
+        tags:        parseTags(it.tags_json || it.tags),
+        ts:          new Date(it.created_at || Date.now()).getTime(),
+        external_id: it.external_id || String(it.id || ''),
+        source:      it.source || 'sheet',
+        attachment_url:  it.attachment_url  || '',
+        attachment_type: it.attachment_type || '',
       }));
       loaded = true;
-      updateSysStatus('N8N (orca-9595): <span class="ok">ACTIVE ✓ ('+T.length+' items)</span>');
-      slog('LOADED: '+T.length+' ITEMS FROM SHEETS');
-      toast('✅ '+T.length+' آیتم از هسته لود شد', 'ok');
+      updateSysStatus('ok', 'SHEETS ACTIVE ✓ (' + T.length + ' items)');
+      slog('LOADED: ' + T.length + ' ITEMS FROM SHEETS');
+      toast('✅ ' + T.length + ' آیتم از Sheets لود شد', 'ok');
     } else {
-      slog('N8N: EMPTY RESPONSE — DEMO MODE');
+      // Empty sheets = demo mode
+      slog('SHEETS: EMPTY — DEMO MODE');
+      updateSysStatus('w', 'SHEETS EMPTY — DEMO');
       loadDemoData();
     }
   } catch(e) {
-    updateSysStatus('N8N (orca-9595): <span class="er">'+e.message.slice(0,30)+'</span>');
-    slog('OFFLINE: '+e.message.slice(0,28));
-    toast('⚠️ آفلاین — داده‌های نمایشی', '', 3000);
-    if(T.length===0) loadDemoData();
+    updateSysStatus('er', e.message.slice(0, 32));
+    slog('OFFLINE: ' + e.message.slice(0, 28));
+    toast('⚠️ آفلاین — داده‌های نمایشی', '', 3200);
+    if (T.length === 0) loadDemoData();
   }
-  renderAll(); rebuildB();
-  loadWallet().catch(()=>{});
+  renderAll();
+  rebuildB();
+  // Update OPS panel counts
+  document.getElementById('us-c').textContent = T.length;
+  document.getElementById('us-s').textContent = STREAK;
 }
 
-function loadDemoData(){
+function parseTags(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw); } catch {
+    return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  }
+}
+
+function loadDemoData() {
   T = [
-    {id:1,text:'گزارش پروژه LifeOps رو آماده کن',type:'task',priority:'high',done:false,tags:['work'],ts:Date.now(),source:'demo',external_id:'d1'},
-    {id:2,text:'تماس با سرمایه‌گذار — فردا ساعت ۱۰',type:'reminder',priority:'high',done:false,tags:['business'],ts:Date.now(),source:'demo',external_id:'d2'},
-    {id:3,text:'ایده: AGI Gamified — داشبورد کاربران',type:'idea',priority:'normal',done:false,tags:['product'],ts:Date.now(),source:'demo',external_id:'d3'},
-    {id:4,text:'قبض برق این ماه',type:'finance',priority:'normal',done:false,tags:['bills'],ts:Date.now(),source:'demo',external_id:'d4'},
-    {id:5,text:'مستندات API Webhook — کامل کردن',type:'task',priority:'normal',done:false,tags:['dev'],ts:Date.now(),source:'demo',external_id:'d5'},
-    {id:6,text:'جلسه فردا ساعت ۱۰ — تیم طراحی',type:'event',priority:'high',done:false,tags:['meeting'],ts:Date.now(),source:'demo',external_id:'d6'},
-    {id:7,text:'تمرین مقاومتی — باشگاه',type:'health',priority:'low',done:true,tags:['health'],ts:Date.now()-3600000,source:'demo',external_id:'d7'},
+    {id:'d1',text:'گزارش پروژه LifeOps رو آماده کن',type:'task',priority:'high',done:false,tags:['work','project'],ts:Date.now(),source:'demo',external_id:'d1'},
+    {id:'d2',text:'تماس با سرمایه‌گذار — فردا ساعت ۱۰',type:'reminder',priority:'high',done:false,tags:['business'],ts:Date.now()-3600000,source:'demo',external_id:'d2'},
+    {id:'d3',text:'ایده: AGI Gamified — داشبورد کاربران',type:'idea',priority:'normal',done:false,tags:['product','ai'],ts:Date.now()-7200000,source:'demo',external_id:'d3'},
+    {id:'d4',text:'قبض برق این ماه',type:'finance',priority:'normal',done:false,tags:['bills'],ts:Date.now()-86400000,source:'demo',external_id:'d4'},
+    {id:'d5',text:'مستندات API Webhook — کامل کردن',type:'task',priority:'normal',done:false,tags:['dev','api'],ts:Date.now()-3600000*2,source:'demo',external_id:'d5'},
+    {id:'d6',text:'جلسه فردا ساعت ۱۰ — تیم طراحی',type:'event',priority:'high',done:false,tags:['meeting','team'],ts:Date.now()-3600000*3,source:'demo',external_id:'d6'},
+    {id:'d7',text:'تمرین مقاومتی — باشگاه',type:'health',priority:'low',done:true,tags:['fitness'],ts:Date.now()-3600000,source:'demo',external_id:'d7'},
+    {id:'d8',text:'شیر تموم شده',type:'shopping',priority:'normal',done:false,tags:['grocery'],ts:Date.now()-7200000,source:'demo',external_id:'d8'},
   ];
+  STREAK = 3;
 }
 
-async function loadWallet(){
-  try {
-    const w = await apiFetch(API.WALLET+'?user_id='+USER_ID);
-    if(w && typeof w.coins!=='undefined'){
-      XP_CUR = w.xp_progress||w.coins||XP_CUR;
-      XP_MAX = w.xp_for_next_level||XP_MAX;
-      STREAK = w.streak_days||STREAK;
-      document.getElementById('us-c').textContent = (w.coins||0);
-      document.getElementById('us-l').textContent = (w.level||1);
-      document.getElementById('us-s').textContent = (w.streak_days||0);
-      document.getElementById('xpt').textContent = `XP: ${XP_CUR}/${XP_MAX}`;
-      document.getElementById('lvl-cur').textContent = 'LVL '+(w.level||1);
-      document.getElementById('lvl-nxt').textContent = '→ LVL '+((w.level||1)+1);
-    }
-  } catch(e) { /* silent */ }
-}
-
-function updateSysStatus(line){
+function updateSysStatus(level, msg) {
   const el = document.getElementById('syss');
-  if(el) el.innerHTML = line+'<br>GOOGLE SHEETS: <span class="ok">SYNCED</span><br>REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>AI GATEWAY: <span class="ok">ONLINE</span><br>TG BOT: <span class="ok">CONNECTED</span>';
+  if (!el) return;
+  const cls = level === 'ok' ? 'ok' : level === 'er' ? 'er' : 'w';
+  el.innerHTML =
+    'N8N: <span class="'+cls+'">'+msg+'</span><br>' +
+    'DB: <span class="ok">SHEETS / SQLite</span><br>' +
+    'REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>' +
+    'AI GATEWAY: <span class="ok">FENRIR CORE</span><br>' +
+    'BOT: <span class="ok">ACTIVE</span>';
 }
 
 /* ══ INTRO ══ */
@@ -771,39 +814,76 @@ const tc = t => TC[t] || TC.note;
 
 /* ══ RENDER MISSIONS ══ */
 function renderM(){
-  const list = T.filter(t=>CF==='all'||t.type===CF);
-  document.getElementById('mlist').innerHTML = list.map((t,i) => {
-    const c=tc(t.type);
-    return `<div class="msn ${t.done?'done':''}" style="animation-delay:${i*.026}s" onclick="mc(event,${JSON.stringify(t.id)})">
-      <button class="mck" onclick="event.stopPropagation();tog(${JSON.stringify(t.id)})">${t.done?'✓':''}</button>
-      <div class="mb2">
-        <div class="mt">${esc(t.text)}</div>
-        <div class="mf">
-          <span class="mty" style="color:${c.cl};border-color:${c.bd}">${t.type.toUpperCase()}</span>
-          ${(t.tags||[]).slice(0,2).map(tg=>`<span class="mtg">#${esc(tg)}</span>`).join('')}
-        </div>
-      </div>
-      <div class="mp ${t.priority==='high'?'ph':t.priority==='normal'?'pn':'pl'}"></div>
-    </div>`;
-  }).join('') || '<div style="text-align:center;color:rgba(155,89,255,.35);font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:30px">NO MISSIONS</div>';
+  const list = T.filter(t => CF==='all' || t.type===CF);
+  const el = document.getElementById('mlist');
+  if (list.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:rgba(155,89,255,.35);font-family:Share Tech Mono,monospace;font-size:10px;padding:30px">NO MISSIONS IN THIS SECTOR</div>';
+    return;
+  }
+  el.innerHTML = '';
+  list.forEach((t, i) => {
+    const c = tc(t.type);
+    const div = document.createElement('div');
+    div.className = 'msn' + (t.done ? ' done' : '');
+    div.style.animationDelay = (i * 0.026) + 's';
+    div.innerHTML =
+      '<button class="mck" type="button">' + (t.done ? '&#x2713;' : '') + '</button>' +
+      '<div class="mb2">' +
+        '<div class="mt">' + esc(t.text) + '</div>' +
+        '<div class="mf">' +
+          '<span class="mty" style="color:' + c.cl + ';border-color:' + c.bd + '">' + t.type.toUpperCase() + '</span>' +
+          (t.tags||[]).slice(0,2).map(tg => '<span class="mtg">#' + esc(tg) + '</span>').join('') +
+        '</div>' +
+      '</div>' +
+      '<div class="mp ' + (t.priority==='high'?'ph':t.priority==='normal'?'pn':'pl') + '"></div>';
+
+    // FIX: direct listener on each button — no inline onclick, no delegation issues
+    div.querySelector('.mck').addEventListener('click', function(e) {
+      e.stopPropagation();
+      tog(t.id);
+    });
+    div.addEventListener('click', function(e) {
+      if (!e.target.classList.contains('mck')) toast('\ud83c\udfaf ' + t.text.slice(0,36));
+    });
+    el.appendChild(div);
+  });
 }
 
-function esc(s){ return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-
-function mc(e,id){
-  if(e.target.classList.contains('mck')) return;
-  const t=T.find(x=>x.id===id); if(t){ toast('🎯 '+t.text.slice(0,32)) }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function tog(id){
-  const t = T.find(x=>x.id===id); if(!t) return;
-  t.done = !t.done; H(); renderM(); refreshS(); rebuildB();
-  if(t.done){ HN('success'); burstP(window.innerWidth/2,window.innerHeight-150) }
-  if(t.source!=='demo' && t.external_id){
-    apiFetch(API.ITEMS+'/'+t.id, {
-      method:'PATCH',
-      body: JSON.stringify({ status: t.done?'done':'active', external_id:t.external_id })
-    }).catch(()=>{ toast('❌ خطا در بروزرسانی','err') });
+/* FIX tog: all item types, dopamine burst, syncs via PUT to Second Brain */
+function tog(id) {
+  const t = T.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  H('medium');
+  renderM(); refreshS(); rebuildB();
+  if (t.done) {
+    HN('success');
+    burstP(window.innerWidth/2, window.innerHeight/2);
+    setTimeout(() => burstP(window.innerWidth/2 + 50, window.innerHeight/2 - 50), 110);
+    setTimeout(() => burstP(window.innerWidth/2 - 40, window.innerHeight/2 + 40), 220);
+    toast('\u2705 \u0622\u0641\u0631\u06cc\u0646 \u0641\u0631\u0645\u0627\u0646\u062f\u0647! \ud83d\udc3a', 'ok', 2000);
+    XP_CUR = Math.min(XP_CUR + 50, XP_MAX);
+  }
+  // Sync to Second Brain v3 via PUT — only for real DB items (not local/demo)
+  if (t.source !== 'demo' && t.id && !String(t.id).startsWith('l') && !String(t.id).startsWith('d')) {
+    apiFetch(API.ITEMS + '/' + t.id, {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: t.id, source: t.source || 'tma',
+        external_id: t.external_id || t.id,
+        content: t.text, author: USER_ID,
+        created_at: new Date(t.ts).toISOString(),
+        item_type: t.type, priority: t.priority,
+        tags: t.tags || [], attachment_url: t.attachment_url || '',
+        attachment_type: t.attachment_type || '',
+        attachment_size: 0, attachment_text: '',
+        updated_at: new Date().toISOString()
+      })
+    }).catch(e => slog('SYNC: ' + e.message.slice(0,20)));
   }
 }
 
@@ -820,65 +900,173 @@ function refreshS(){
   document.getElementById('s-rm').textContent = T.filter(t=>t.type==='reminder'&&!t.done).length;
 }
 
-/* ══ CAPTURE ══ */
+/* ══ CAPTURE — routes through main INBOUND pipeline (Scout Drone) ══ */
 async function doCapture(){
-  const inp = document.getElementById('cin'), val = inp.value.trim(); if(!val) return;
+  const inp = document.getElementById('cin');
+  const val = inp.value.trim();
+  if (!val) return;
   const btn = document.getElementById('fb');
-  btn.classList.add('loading'); btn.textContent='...';
-  H('medium'); inp.value='';
+  btn.classList.add('loading'); btn.textContent = '...';
+  H('medium'); inp.value = '';
 
-  let item = { item_type:'note', priority:'normal', tags:[], content:val };
-  try {
-    const r = await apiFetch(API.CLASSIFY, {
-      method:'POST',
-      body: JSON.stringify({ content: val, source:'tma', user_id:USER_ID })
-    });
-    if(r.item_type) item.item_type = r.item_type;
-    if(r.priority) item.priority = r.priority;
-    if(r.tags) item.tags = Array.isArray(r.tags)?r.tags:(r.tags?String(r.tags).split(','):[]);
-    setAI(r.assistant_message || 'ثبت شد فرمانده. 🐺');
-  } catch(e) {
-    setAI('⚠️ AI آفلاین — ذخیره محلی');
-  }
-
+  // Optimistic local add
+  const extId = 'tma_' + Date.now();
   const newT = {
-    id: 'l'+Date.now(),
-    text: val, type: item.item_type, priority: item.priority,
-    done: false, tags: item.tags, ts: Date.now(),
-    source:'web', external_id: 'w'+Date.now(),
+    id: 'l' + Date.now(), text: val, type: 'note', priority: 'normal',
+    done: false, tags: [], ts: Date.now(), source: 'tma', external_id: extId,
   };
   T.unshift(newT);
+  renderAll(); rebuildB();
 
   try {
-    await apiFetch(API.ITEMS, { method:'POST', body:JSON.stringify({...item, user_id:USER_ID, source:'tma'}) });
-    toast('✅ ثبت شد در گاوصندوق','ok');
-    HN('success'); burstP(window.innerWidth/2, window.innerHeight-80);
+    // ▶ POST to MAIN INBOUND webhook (telegram/lifeops_inbound)
+    // Scout Drone Normalize node accepts direct JSON with these fields:
+    // source, external_id, content, author, created_at
+    // It then goes: Validate → JS Slice (memory) → Cognitive Core → TG Reply + DB
+    const payload = {
+      source: 'tma',
+      external_id: extId,
+      content: val,
+      author: USER_ID,
+      created_at: new Date().toISOString(),
+      // wrap in message-like structure so Normalize node handles it
+      message: {
+        message_id: Date.now(),
+        text: val,
+        date: Math.floor(Date.now()/1000),
+        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+        chat: { id: parseInt(USER_ID)||5953981409 }
+      }
+    };
+
+    const res = await apiFetch(API.INBOUND, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    // Inbound returns { status: "received", ok: true } immediately
+    // AI response comes via Telegram bot separately
+    toast('✅ فرستاده شد — پاسخ از بات میاد 🐺', 'ok');
+    HN('success');
+    burstP(window.innerWidth/2, window.innerHeight - 80);
+    setAI('پیامت ارسال شد فرمانده. پاسخ از فنریر از طریق بات تلگرام میاد. 🐺');
+
+    // Update local item type if response has classification
+    if (res && res.item_type) {
+      newT.type = res.item_type;
+      newT.priority = res.priority || 'normal';
+      newT.tags = parseTags(res.tags);
+      renderAll(); rebuildB();
+    }
   } catch(e) {
-    toast('💾 فقط محلی ذخیره شد');
+    // Fallback: direct classify + DB save
+    slog('INBOUND FAIL: ' + e.message.slice(0,25) + ' — fallback classify');
+    try {
+      const r = await apiFetch(API.CLASSIFY, {
+        method: 'POST',
+        body: JSON.stringify({ content: val, source: 'tma', user_id: USER_ID })
+      });
+      newT.type = r.item_type || 'note';
+      newT.priority = r.priority || 'normal';
+      newT.tags = parseTags(r.tags);
+      setAI(r.summary || r.assistant_message || 'ثبت شد فرمانده (فقط محلی). 🐺');
+
+      // Save directly to Second Brain
+      await apiFetch(API.ITEMS, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'tma', external_id: extId, content: val,
+          author: USER_ID, created_at: new Date().toISOString(),
+          item_type: newT.type, priority: newT.priority, tags: newT.tags,
+          raw: {}, attachment_url:'', attachment_type:'', attachment_size:0, attachment_text:''
+        })
+      });
+      toast('💾 ذخیره شد (بدون AI pipeline)', '', 3000);
+    } catch(e2) {
+      toast('💾 فقط محلی ذخیره شد');
+    }
+    renderAll(); rebuildB();
   }
 
-  renderAll(); rebuildB();
-  btn.classList.remove('loading'); btn.textContent='▶ FIRE';
-  apiFetch(API.LOG, {method:'POST', body:JSON.stringify({event:'item_captured',source:'tma',content:val.slice(0,50),type:item.item_type,user_id:USER_ID,timestamp:new Date().toISOString()})}).catch(()=>{});
+  btn.classList.remove('loading'); btn.textContent = '▶ FIRE';
 }
 
-/* ══ MEDIA UPLOAD ══ */
-function hmed(inp, mtype){
-  const f = inp.files?.[0]; if(!f) return;
+/* ══ MEDIA UPLOAD — routes through INBOUND pipeline ══ */
+async function hmed(inp, mtype) {
+  const f = inp.files?.[0];
+  if (!f) return;
   H('medium');
-  const fd = new FormData();
-  fd.append('file', f);
-  fd.append('type', mtype);
-  fd.append('user_id', USER_ID);
-  fd.append('source','tma');
-  toast('📤 در حال آپلود...');
-  const newT = { id:'l'+Date.now(), text:`[${mtype.toUpperCase()}] ${f.name}`, type:mtype, priority:'normal',
-                 done:false, tags:[mtype,f.type.split('/')[0]||'file'], ts:Date.now(), source:'web', external_id:'w'+Date.now() };
+  inp.value = '';
+
+  const extId = mtype + '_' + Date.now();
+  const itemType = mtype === 'image' ? 'image' : mtype === 'voice' ? 'voice' : 'document';
+  const contentText = '[' + mtype.toUpperCase() + '] ' + f.name;
+
+  // Optimistic local add
+  const newT = {
+    id: 'l' + Date.now(), text: contentText, type: itemType,
+    priority: 'normal', done: false, tags: [mtype],
+    ts: Date.now(), source: 'tma', external_id: extId,
+    attachment_type: mtype, attachment_url: ''
+  };
   T.unshift(newT);
-  fetch(API.ITEMS, {method:'POST', body:fd, headers:{'x-user-id':USER_ID}})
-    .then(()=>{ toast('✅ فایل ذخیره شد','ok'); HN('success'); renderAll(); rebuildB(); burstP(window.innerWidth/2,window.innerHeight-80) })
-    .catch(()=>{ toast('❌ خطا','err') });
-  inp.value='';
+  renderAll(); rebuildB();
+  toast('📤 ثبت ' + f.name + '...');
+
+  try {
+    // Send metadata via INBOUND — n8n Scout Drone normalizes it
+    // Binary file upload requires Telegram bot pipeline
+    // Here we register the attachment metadata in Second Brain directly
+    const payload = {
+      source: 'tma',
+      external_id: extId,
+      content: contentText,
+      author: USER_ID,
+      created_at: new Date().toISOString(),
+      item_type: itemType,
+      priority: 'normal',
+      tags: [mtype, 'upload'],
+      raw: { via: 'tma_upload', filename: f.name, size: f.size, type: f.type },
+      attachment_url: '',
+      attachment_type: mtype,
+      attachment_size: f.size,
+      attachment_text: '',
+      // Also wrap as message for INBOUND normalize node
+      message: {
+        message_id: Date.now(),
+        text: contentText,
+        date: Math.floor(Date.now()/1000),
+        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+        chat: { id: parseInt(USER_ID)||5953981409 }
+      }
+    };
+
+    // Route through INBOUND for full pipeline (Cognitive Core + DB)
+    await apiFetch(API.INBOUND, { method: 'POST', body: JSON.stringify(payload) });
+    toast('✅ ' + f.name + ' ثبت شد — برای آپلود Drive از بات بفرست', 'ok');
+    HN('success');
+    burstP(window.innerWidth/2, window.innerHeight - 80);
+    slog('UPLOAD: ' + contentText.slice(0,30));
+  } catch(e) {
+    // Fallback: save directly to Second Brain items
+    try {
+      await apiFetch(API.ITEMS, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'tma', external_id: extId, content: contentText,
+          author: USER_ID, created_at: new Date().toISOString(),
+          item_type: itemType, priority: 'normal', tags: [mtype, 'upload'],
+          raw: { via: 'tma_upload', filename: f.name, size: f.size },
+          attachment_url: '', attachment_type: mtype,
+          attachment_size: f.size, attachment_text: ''
+        })
+      });
+      toast('💾 ' + f.name + ' در Sheets ثبت شد', 'ok');
+    } catch(e2) {
+      toast('⚠️ فقط محلی ذخیره شد');
+    }
+    renderAll();
+  }
 }
 
 /* ══ VAULT ══ */
@@ -948,104 +1136,205 @@ setInterval(()=>{ if(curTab===0) setAI(advs[~~(Math.random()*advs.length)]) }, 9
 setTimeout(()=>setAI(advs[0]), 1400);
 
 /* ══ OPS BUTTONS ══ */
-async function opDaily(btn){
+async function opDaily(btn) {
+  if (btn.classList.contains('loading')) return;
   btn.classList.add('loading'); H('medium');
-  const active = T.filter(t=>!t.done), highP = active.filter(t=>t.priority==='high').length;
-  openRp('📊 گزارش روزانه AI','در حال دریافت گزارش از Fenrir...');
+  openRp('\ud83d\udcca \u06af\u0632\u0627\u0631\u0634 \u0631\u0648\u0632\u0627\u0646\u0647 AI', '\u062f\u0631 \u062d\u0627\u0644 \u062f\u0631\u06cc\u0627\u0641\u062a \u0627\u0632 Google Sheets...');
   try {
-    const d = await apiFetch(API.SUMMARY, {
-      method:'POST',
+    // Step 1: fetch last 24h from Sheets
+    const d = await apiFetch(API.ITEMS + '?since_hours=24');
+    let items = [];
+    if (d && Array.isArray(d.items)) items = d.items;
+    else if (Array.isArray(d)) items = d;
+    slog('DAILY: fetched ' + items.length + ' items from Sheets');
+
+    // Step 2: send to AI summarize (ai/summarize webhook)
+    const sumRes = await apiFetch(API.SUMMARY, {
+      method: 'POST',
       body: JSON.stringify({
-        type:'daily', user_id:USER_ID,
-        context:`${active.length} active, ${highP} urgent. Generate tactical Persian daily briefing.`,
-        items: active.slice(0,10).map(t=>({text:t.text,type:t.type,priority:t.priority}))
+        period: 'daily',
+        items: items,
+        stats: {
+          total_items: items.length,
+          by_priority: {
+            high:   items.filter(x => x.priority==='high').length,
+            normal: items.filter(x => x.priority==='normal').length,
+            low:    items.filter(x => x.priority==='low').length,
+          }
+        }
       })
     });
-    const rep = d.report || d.summary || d.response || 'گزارش خالی بود.';
-    openRp('📊 گزارش روزانه AI', rep);
-    slog('DAILY REPORT → READY');
-    toast('✅ گزارش آماده','ok');
+    const report = sumRes.summary || sumRes.text || sumRes.report || sumRes.response || '\u06af\u0632\u0627\u0631\u0634 \u062e\u0627\u0644\u06cc \u0628\u0648\u062f.';
+    openRp('\ud83d\udcca \u06af\u0632\u0627\u0631\u0634 \u0631\u0648\u0632\u0627\u0646\u0647 AI (Fenrir)', report);
+    slog('DAILY REPORT: OK (' + items.length + ' items)');
+    toast('\u2705 \u06af\u0632\u0627\u0631\u0634 \u0622\u0645\u0627\u062f\u0647', 'ok');
   } catch(e) {
-    openRp('📊 گزارش روزانه AI', `⚠️ AI آفلاین — گزارش محلی:\n\nAPM فعال: ${active.length}\nUrgent: ${highP}\nStreak: ${STREAK} روز\n\nفرمانده، ۳ تیر آخر رو بزن و برو استراحت. 🐺`);
-    toast('⚠️ AI آفلاین','');
+    // Local fallback using T array
+    const hi = T.filter(t=>t.priority==='high'&&!t.done);
+    const all_active = T.filter(t=>!t.done);
+    openRp('\ud83d\udcca \u06af\u0632\u0627\u0631\u0634 \u0631\u0648\u0632\u0627\u0646\u0647 (\u0645\u062d\u0644\u06cc)',
+      '\ud83d\udcca \u06af\u0632\u0627\u0631\u0634 \u0631\u0648\u0632\u0627\u0646\u0647 (\u0628\u062f\u0648\u0646 \u0627\u062a\u0635\u0627\u0644 AI)\n\n' +
+      '\ud83d\udd34 \u0641\u0648\u0631\u06cc: ' + hi.length + '\n\ud83c\udfe6 \u0641\u0639\u0627\u0644: ' + all_active.length + '\n' +
+      hi.slice(0,5).map(t=>'\u2022 '+t.text).join('\n') + '\n\n\u26a0\ufe0f AI \u0622\u0641\u0644\u0627\u06cc\u0646');
+    toast('\u26a0\ufe0f AI \u0622\u0641\u0644\u0627\u06cc\u0646 \u2014 \u0645\u062d\u0644\u06cc', '', 3000);
+    slog('DAILY REPORT: offline fallback');
   }
   btn.classList.remove('loading');
 }
 
-async function opWeekly(btn){
+async function opWeekly(btn) {
+  if (btn.classList.contains('loading')) return;
   btn.classList.add('loading'); H('medium');
-  const doneW = T.filter(t=>t.done&&t.ts>=Date.now()-7*86400000).length;
-  openRp('📈 گزارش هفتگی','در حال تحلیل هفته...');
+  openRp('\ud83d\udcc8 \u06af\u0632\u0627\u0631\u0634 \u0647\u0641\u062a\u06af\u06cc', '\u062f\u0631 \u062d\u0627\u0644 \u062a\u062d\u0644\u06cc\u0644 \u0647\u0641\u062a\u0647 \u0627\u0632 Sheets...');
   try {
-    const d = await apiFetch(API.SUMMARY, {
-      method:'POST',
+    const d = await apiFetch(API.ITEMS + '?since_hours=168');
+    let items = [];
+    if (d && Array.isArray(d.items)) items = d.items;
+    else if (Array.isArray(d)) items = d;
+    slog('WEEKLY: fetched ' + items.length + ' items');
+
+    const sumRes = await apiFetch(API.SUMMARY, {
+      method: 'POST',
       body: JSON.stringify({
-        type:'weekly', user_id:USER_ID,
-        context:`${doneW} done this week, ${T.length} total items, ${STREAK} day streak. Generate tactical weekly review.`,
-        items: T.slice(0,20).map(t=>({text:t.text,type:t.type,priority:t.priority,done:t.done}))
+        period: 'weekly',
+        items: items,
+        stats: {
+          total_items: items.length,
+          by_priority: {
+            high:   items.filter(x => x.priority==='high').length,
+            normal: items.filter(x => x.priority==='normal').length,
+            low:    items.filter(x => x.priority==='low').length,
+          }
+        }
       })
     });
-    const rep = d.report || d.summary || d.response || 'گزارش خالی بود.';
-    openRp('📈 گزارش هفتگی Wolf Pack', rep);
-    slog('WEEKLY REPORT → READY');
-    toast('📊 هفتگی آماده','ok');
+    const report = sumRes.summary || sumRes.text || sumRes.report || sumRes.response || '\u06af\u0632\u0627\u0631\u0634 \u062e\u0627\u0644\u06cc.';
+    openRp('\ud83d\udcc8 \u06af\u0632\u0627\u0631\u0634 \u0647\u0641\u062a\u06af\u06cc Wolf Pack', report);
+    slog('WEEKLY REPORT: OK (' + items.length + ' items)');
+    toast('\ud83d\udcca \u0647\u0641\u062a\u06af\u06cc \u0622\u0645\u0627\u062f\u0647', 'ok');
   } catch(e) {
-    openRp('📈 گزارش هفتگی','⚠️ AI آفلاین');
+    const doneW = T.filter(t=>t.done&&t.ts>=Date.now()-7*86400000).length;
+    openRp('\ud83d\udcc8 \u0647\u0641\u062a\u06af\u06cc (\u0645\u062d\u0644\u06cc)',
+      '\ud83d\udcc8 \u0647\u0641\u062a\u0647 Wolf Pack\n\n\u2705 \u0627\u0646\u062c\u0627\u0645 \u0634\u062f\u0647: '+doneW+'\n\ud83c\udfaf \u06a9\u0644: '+T.length+'\n\ud83d\udd25 Streak: '+STREAK+' \u0631\u0648\u0632\n\n\u26a0\ufe0f AI \u0622\u0641\u0644\u0627\u06cc\u0646');
+    toast('\u26a0\ufe0f AI \u0622\u0641\u0644\u0627\u06cc\u0646', '', 3000);
   }
   btn.classList.remove('loading');
 }
 
-async function opScout(btn){
+async function opScout(btn) {
+  if (btn.classList.contains('loading')) return;
   btn.classList.add('loading'); H('medium');
-  openRp('🛩️ پهپاد شناسایی','در حال اسکن ۲۴ ساعت اخیر...');
+  openRp('\ud83d\udee9\ufe0f \u067e\u0647\u067e\u0627\u062f \u0634\u0646\u0627\u0633\u0627\u06cc\u06cc', '\u062f\u0631 \u062d\u0627\u0644 \u0627\u0633\u06a9\u0646 \u062a\u0633\u06a9\u200c\u0647\u0627\u06cc \u06f2\u06f4 \u0633\u0627\u0639\u062a \u0627\u062e\u06cc\u0631...');
   try {
-    const d = await apiFetch(API.SCOUT+'?user_id='+USER_ID).catch(async()=>{
-      return await apiFetch(API.SUMMARY, { method:'POST', body:JSON.stringify({type:'scout',user_id:USER_ID})});
+    // Fetch 24h tasks from Sheets
+    const d = await apiFetch(API.ITEMS + '?since_hours=24');
+    let items = [];
+    if (d && Array.isArray(d.items)) items = d.items;
+    else if (Array.isArray(d)) items = d;
+
+    const tasks = items.filter(it => (it.item_type||it.type) === 'task');
+    slog('SCOUT: ' + tasks.length + ' tasks in 24h');
+
+    // Send to summarize as scout report
+    const sumRes = await apiFetch(API.SUMMARY, {
+      method: 'POST',
+      body: JSON.stringify({
+        period: 'daily',
+        items: tasks,
+        stats: { total_items: tasks.length, label: 'scout_drone_report' }
+      })
     });
-    const rep = d.report || d.summary || d.response || '۲۴ ساعت پاک — اهداف جدید ثبت نشده.';
-    openRp('🛩️ Scout Drone Report', rep);
-    slog('SCOUT DRONE → COMPLETE');
-    toast('🎯 پهپاد فرود اومد','ok');
+    const report = sumRes.summary || sumRes.text || sumRes.report ||
+      ('\u26a1\ufe0f \u06af\u0632\u0627\u0631\u0634 \u067e\u0647\u067e\u0627\u062f\n' + tasks.length + ' \u0647\u062f\u0641 \u062f\u0631 \u0631\u0627\u062f\u0627\u0631.');
+    openRp('\ud83d\udee9\ufe0f Scout Drone Report', report);
+    slog('SCOUT DRONE: complete');
+    toast('\ud83c\udfaf \u067e\u0647\u067e\u0627\u062f \u0641\u0631\u0648\u062f \u0627\u0648\u0645\u062f', 'ok');
   } catch(e) {
-    openRp('🛩️ پهپاد شناسایی','⚠️ پهپاد در دسترس نیست');
+    const tasks = T.filter(t=>t.type==='task'&&!t.done);
+    openRp('\ud83d\udee9\ufe0f Scout (\u0645\u062d\u0644\u06cc)',
+      '\u26a1\ufe0f \u06af\u0632\u0627\u0631\u0634 \u0634\u0646\u0627\u0633\u0627\u06cc\u06cc\n\n\ud83d\udcca \u0648\u0636\u0639\u06cc\u062a \u0631\u0627\u062f\u0627\u0631: ' + tasks.length + ' \u0647\u062f\u0641 \u0645\u0639\u0648\u0642\u0647\n\n' +
+      tasks.slice(0,10).map(t=>'\ud83c\udfaf '+t.text).join('\n') + '\n\n\u26a0\ufe0f \u0627\u062a\u0635\u0627\u0644 \u0636\u0639\u06cc\u0641');
+    toast('\u26a0\ufe0f \u0633\u06cc\u06af\u0646\u0627\u0644 \u0636\u0639\u06cc\u0641', '', 3000);
   }
   btn.classList.remove('loading');
 }
 
-async function opSync(btn){
-  btn.classList.add('loading'); H(); slog('MANUAL SYNC initiated');
+async function opSync(btn) {
+  if (btn.classList.contains('loading')) return;
+  btn.classList.add('loading'); H();
+  slog('MANUAL SYNC initiated');
   await loadLive();
-  btn.classList.remove('loading'); toast('🔄 همگام‌سازی کامل','ok');
+  btn.classList.remove('loading');
+  toast('\ud83d\udd04 \u0647\u0645\u06af\u0627\u0645\u200c\u0633\u0627\u0632\u06cc \u06a9\u0627\u0645\u0644', 'ok');
 }
 
-function openModal(){
-  const el=document.getElementById('remModal'); el.classList.add('show');
-  const dt=new Date(); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());
-  document.getElementById('rem-date').value=dt.toISOString().slice(0,16);
+function openModal() {
+  const el = document.getElementById('remModal');
+  el.classList.add('show');
+  // Set default to +1h from now in local time
+  const dt = new Date(Date.now() + 3600000);
+  const pad = n => String(n).padStart(2,'0');
+  const localStr = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'T'+pad(dt.getHours())+':'+pad(dt.getMinutes());
+  document.getElementById('rem-date').value = localStr;
   H();
 }
 function closeModal(){ document.getElementById('remModal').classList.remove('show') }
 function openRp(ttl,body){ document.getElementById('rp-ttl').textContent=ttl; document.getElementById('rp-body').textContent=body; document.getElementById('rpModal').classList.add('show'); H() }
 function closeRpModal(){ document.getElementById('rpModal').classList.remove('show') }
 
-async function submitReminder(){
-  const text=document.getElementById('rem-text').value.trim();
-  const dt=document.getElementById('rem-date').value;
-  const prio=document.getElementById('rem-prio').value;
-  if(!text) return toast('❌ متن رو بنویس','err');
-  H('medium'); closeModal();
-  const payload={
-    text, datetime: new Date(dt).toISOString(), priority:prio,
-    user_id:USER_ID, source:'tma', timestamp:new Date().toISOString()
+async function submitReminder() {
+  const text = document.getElementById('rem-text').value.trim();
+  const dtLocal = document.getElementById('rem-date').value;
+  const prio = document.getElementById('rem-prio').value;
+
+  if (!text) { toast('\u274c \u0645\u062a\u0646 \u06cc\u0627\u062f\u0622\u0648\u0631 \u0631\u0648 \u0628\u0646\u0648\u06cc\u0633', 'err'); return; }
+  if (!dtLocal) { toast('\u274c \u0632\u0645\u0627\u0646 \u0631\u0648 \u0627\u0646\u062a\u062e\u0627\u0628 \u06a9\u0646', 'err'); return; }
+
+  const dtObj = new Date(dtLocal);
+  if (isNaN(dtObj.getTime())) { toast('\u274c \u062a\u0627\u0631\u06cc\u062e \u0645\u0639\u062a\u0628\u0631 \u0646\u06cc\u0633\u062a', 'err'); return; }
+  if (dtObj <= new Date()) { toast('\u274c \u0632\u0645\u0627\u0646 \u0628\u0627\u06cc\u062f \u062f\u0631 \u0622\u06cc\u0646\u062f\u0647 \u0628\u0627\u0634\u062f', 'err'); return; }
+
+  H('medium');
+  closeModal();
+
+  // Optimistic local add
+  const extId = 'rem_' + Date.now();
+  const newT = {
+    id: extId, text: text, type: 'reminder', priority: prio,
+    done: false, tags: ['reminder', 'scheduled'], ts: Date.now(),
+    source: 'tma', external_id: extId,
   };
-  const newT={id:'l'+Date.now(),text,type:'reminder',priority:prio,done:false,tags:['reminder'],ts:Date.now(),source:'web',external_id:'w'+Date.now(),datetime:dt};
-  T.unshift(newT);
+  T.unshift(newT); renderAll(); rebuildB();
+
   try {
-    await apiFetch(API.REMINDER, { method:'POST', body:JSON.stringify(payload) });
-    toast('✅ یادآور ثبت شد','ok'); HN('success');
-    burstP(window.innerWidth/2,window.innerHeight/2);
-  } catch(e) { toast('💾 فقط محلی ذخیره شد') }
-  renderAll(); rebuildB();
+    // SSA Reminder Receiver v2 — exact required fields:
+    // user_id (string), reminder_text, datetime (UTC ISO string), priority, source
+    const utcISO = dtObj.toISOString();
+    const res = await apiFetch(API.REMINDER, {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: USER_ID,
+        reminder_text: text,
+        datetime: utcISO,
+        priority: prio,
+        source: 'tma'
+      })
+    });
+
+    if (res && res.success === false) {
+      toast('\u274c ' + (res.error || '\u062e\u0637\u0627 \u062f\u0631 \u062b\u0628\u062a'), 'err');
+      slog('REMINDER ERR: ' + (res.error || '?'));
+    } else {
+      toast('\u2705 \u06cc\u0627\u062f\u0622\u0648\u0631 \u062f\u0631 Sheets \u062b\u0628\u062a \u0634\u062f', 'ok');
+      HN('success');
+      burstP(window.innerWidth/2, window.innerHeight/2);
+      slog('REMINDER SAVED: ' + text.slice(0,30));
+    }
+  } catch(e) {
+    toast('\u26a0\ufe0f \u06cc\u0627\u062f\u0622\u0648\u0631 \u0641\u0642\u0637 \u0645\u062d\u0644\u06cc \u0630\u062e\u06cc\u0631\u0647 \u0634\u062f');
+    slog('REMINDER FAIL: ' + e.message.slice(0,30));
+  }
+  document.getElementById('rem-text').value = '';
 }
 
 function opClassifyModal(btn){
@@ -1128,60 +1417,75 @@ function aiTyping(on){
   } else if(!on && t) t.remove();
 }
 
-async function aiSend(){
-  const inp=document.getElementById('aii');
-  const text=inp.value.trim();
-  if(!text && !aiAttachFile) return;
-  if(text){ aiMsg('u', text) }
-  inp.value=''; H('light');
-
-  if(aiAttachFile){
-    const pv=document.createElement('div'); pv.className='aipv';
-    if(aiAttachFile.type.startsWith('image/')){
-      const img=document.createElement('img'); img.src=URL.createObjectURL(aiAttachFile); pv.appendChild(img);
-    } else {
-      pv.textContent='📎 '+aiAttachFile.name;
-    }
-    document.getElementById('ailog').appendChild(pv);
-  }
-
+async function aiSend() {
+  const inp = document.getElementById('aii');
+  const text = inp.value.trim();
+  if (!text && !aiAttachFile) return;
+  if (text) aiMsg('u', text);
+  inp.value = '';
+  H('light');
   aiTyping(true);
 
   try {
-    let res;
-    if(aiAttachFile){
-      const fd=new FormData();
-      fd.append('file', aiAttachFile);
-      if(text) fd.append('message', text);
-      fd.append('user_id', USER_ID);
-      res = await fetch(API.CHAT, {method:'POST',body:fd,headers:{'x-user-id':USER_ID}}).then(r=>r.json());
-    } else {
-      // Try CHAT endpoint first, fallback to CLASSIFY (which exists in v6 workflows)
-      try {
-        res = await apiFetch(API.CHAT, {method:'POST', body:JSON.stringify({user_id:USER_ID, message:text, source:'chat'})});
-      } catch(e){
-        res = await apiFetch(API.CLASSIFY, {method:'POST', body:JSON.stringify({user_id:USER_ID, content:text, source:'chat'})});
+    // Route through INBOUND — Cognitive Core gives Persian AI response via TG
+    // Also save to Second Brain DB
+    const extId = 'chat_' + Date.now();
+    const payload = {
+      source: 'tma',
+      external_id: extId,
+      content: text || '[attachment]',
+      author: USER_ID,
+      created_at: new Date().toISOString(),
+      message: {
+        message_id: Date.now(),
+        text: text || '[attachment]',
+        date: Math.floor(Date.now()/1000),
+        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+        chat: { id: parseInt(USER_ID)||5953981409 }
       }
-    }
+    };
+
+    // Try INBOUND first (full Cognitive Core pipeline)
+    const res = await apiFetch(API.INBOUND, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
     aiTyping(false);
-    const reply = res.reply || res.assistant_message || res.response || 'دریافت شد فرمانده 🐺';
-    aiMsg('b', reply, res.item_type?{tag:res.item_type.toUpperCase()}:null);
-    if(res.xp_earned || res.xp_reward){
-      burstP(window.innerWidth/2, window.innerHeight/2);
-      HN('success');
-      setTimeout(()=>toast(`+${res.xp_earned||res.xp_reward} XP 🩸`,'ok'),200);
-      loadWallet().catch(()=>{});
-    }
-    // Add to local items
-    if(res.item_type && text){
-      T.unshift({id:'l'+Date.now(),text,type:res.item_type,priority:res.priority||'normal',done:false,tags:res.tags||[],ts:Date.now(),source:'chat',external_id:'c'+Date.now()});
+
+    // INBOUND returns {status:"received",ok:true} — AI response goes to Telegram
+    const reply = res.assistant_message || res.reply || res.summary ||
+      '\u067e\u06cc\u0627\u0645\u062a \u062f\u0631\u06cc\u0627\u0641\u062a \u0634\u062f \u0641\u0631\u0645\u0627\u0646\u062f\u0647. \u067e\u0627\u0633\u062e \u0641\u0646\u0631\u06cc\u0631 \u0627\u0632 \u0628\u0627\u062a \u062a\u0644\u06af\u0631\u0627\u0645 \u0645\u06cc\u0627\u062f. \ud83d\udc3a';
+    aiMsg('b', reply);
+
+    // Optimistic add to local state
+    if (text) {
+      T.unshift({
+        id: extId, text: text, type: 'note', priority: 'normal',
+        done: false, tags: ['chat'], ts: Date.now(), source: 'chat', external_id: extId
+      });
       renderAll(); rebuildB();
     }
   } catch(e) {
-    aiTyping(false);
-    aiMsg('b', '⚠️ هسته موقتاً آفلاینه. بعداً دوباره امتحان کن.');
+    // Fallback: classify only (no full pipeline)
+    try {
+      const r = await apiFetch(API.CLASSIFY, {
+        method: 'POST',
+        body: JSON.stringify({ content: text, source: 'chat', user_id: USER_ID })
+      });
+      aiTyping(false);
+      const reply = r.assistant_message || r.summary || '[' + (r.item_type||'note').toUpperCase() + '] \u062f\u0631\u06cc\u0627\u0641\u062a \u0634\u062f. \ud83d\udc3a';
+      aiMsg('b', reply, r.item_type ? { tag: r.item_type.toUpperCase() } : null);
+      if (text && r.item_type) {
+        T.unshift({ id:'c'+Date.now(), text, type:r.item_type, priority:r.priority||'normal',
+          done:false, tags:parseTags(r.tags), ts:Date.now(), source:'chat', external_id:'c'+Date.now() });
+        renderAll(); rebuildB();
+      }
+    } catch(e2) {
+      aiTyping(false);
+      aiMsg('b', '\u26a0\ufe0f \u0647\u0633\u062a\u0647 \u0645\u0648\u0642\u062a\u0627\u064b \u0622\u0641\u0644\u0627\u06cc\u0646\u0647. \u0628\u0639\u062f\u0627\u064b \u062f\u0648\u0628\u0627\u0631\u0647 \u0627\u0645\u062a\u062d\u0627\u0646 \u06a9\u0646.');
+    }
   }
-  aiAttachFile=null;
+  aiAttachFile = null;
 }
 
 function aiAttach(inp){
