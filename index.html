@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000008">
-<title>LifeOps Galactic Edition</title>
+<title>LifeOps — Galactic Edition</title>
 <script>
 // Load Telegram SDK — fails gracefully if blocked
 (function() {
@@ -106,24 +106,103 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .pg.on{opacity:1;pointer-events:all;transform:none}
 
 /* CAPTURE BAR */
-.capbar{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:7px .9rem;padding-bottom:calc(7px + var(--safe));background:rgba(4,0,30,.98);border-top:1px solid var(--bd)}
-.cap-in{flex:1;background:rgba(155,89,255,.06);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:10.5px;padding:8px 10px;outline:none;direction:rtl;letter-spacing:.5px;transition:all .2s;min-width:0}
-.cap-in::placeholder{color:rgba(155,89,255,.3);font-size:10px}
-.cap-in:focus{border-color:var(--pu);background:rgba(155,89,255,.1)}
-.mbtns{display:flex;gap:4px;flex-shrink:0}
-.mb{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(155,89,255,.07);border:1px solid rgba(155,89,255,.2);border-radius:3px;cursor:pointer;transition:all .18s;font-size:13px;flex-shrink:0}
-.mb:active{background:rgba(155,89,255,.22);transform:scale(.9)}
-.mb.c{border-color:rgba(0,212,255,.22);background:rgba(0,212,255,.06)}
-.mb.c:active{background:rgba(0,212,255,.2)}
-.mb.c.rec{background:rgba(255,68,102,.18);border-color:var(--re);animation:recpul 1s infinite}
-@keyframes recpul{0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,.6)}50%{box-shadow:0 0 0 6px rgba(255,68,102,0)}}
-.mb.g{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.05)}
-.mb.g:active{background:rgba(0,255,136,.18)}
-.mb.ai{border-color:rgba(192,132,252,.35);background:rgba(192,132,252,.08)}
-.mb.ai:active{background:rgba(192,132,252,.22)}
-.fb{padding:8px 10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron','Courier New',monospace;font-size:.58rem;font-weight:700;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .18s;flex-shrink:0}
-.fb:active{background:rgba(155,89,255,.28);transform:scale(.95)}
-.fb.loading{color:rgba(155,89,255,.5);cursor:not-allowed}
+.capbar{
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:0;
+  padding-bottom:var(--safe);
+  background:rgba(4,0,30,.98);
+  border-top:1px solid var(--bd);
+  box-shadow:0 -4px 24px rgba(108,47,255,.18);
+}
+/* Row 1: media buttons */
+.cap-media-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px 6px;
+  border-bottom:1px solid rgba(155,89,255,.08);
+}
+/* Row 2: text input + fire button */
+.cap-input-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px 10px;
+}
+.cap-in{
+  flex:1;
+  background:rgba(155,89,255,.08);
+  border:1.5px solid rgba(155,89,255,.3);
+  border-radius:8px;
+  color:var(--wh);
+  font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;
+  font-size:15px;
+  font-weight:500;
+  padding:12px 14px;
+  outline:none;
+  direction:rtl;
+  transition:all .2s;
+  min-width:0;
+  min-height:44px;
+  line-height:1.3;
+}
+.cap-in::placeholder{color:rgba(155,89,255,.4);font-size:14px}
+.cap-in:focus{border-color:var(--pu);background:rgba(155,89,255,.13);box-shadow:0 0 0 2px rgba(155,89,255,.15)}
+.mbtns{display:flex;gap:6px;flex-shrink:0}
+.mb{
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(155,89,255,.08);
+  border:1.5px solid rgba(155,89,255,.25);
+  border-radius:10px;
+  cursor:pointer;
+  transition:all .18s;
+  font-size:17px;
+  flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.mb:active{background:rgba(155,89,255,.28);transform:scale(.88)}
+.mb.c{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.08)}
+.mb.c:active{background:rgba(0,212,255,.25)}
+.mb.c.rec{background:rgba(255,68,102,.2);border-color:var(--re);animation:recpul 1s infinite}
+@keyframes recpul{0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,.6)}50%{box-shadow:0 0 0 8px rgba(255,68,102,0)}}
+.mb.g{border-color:rgba(0,255,136,.28);background:rgba(0,255,136,.07)}
+.mb.g:active{background:rgba(0,255,136,.22)}
+.mb.ai{border-color:rgba(192,132,252,.4);background:rgba(192,132,252,.1)}
+.mb.ai:active{background:rgba(192,132,252,.28)}
+.mb-label{
+  font-family:'Share Tech Mono','Courier New',monospace;
+  font-size:7px;letter-spacing:1px;
+  color:rgba(155,89,255,.5);
+  display:block;margin-top:2px;
+  text-align:center;
+}
+.mb-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.fb{
+  padding:12px 18px;
+  background:linear-gradient(135deg,rgba(155,89,255,.25),rgba(108,47,255,.35));
+  border:1.5px solid rgba(155,89,255,.55);
+  border-radius:10px;
+  color:var(--vi);
+  font-family:'Orbitron','Courier New',monospace;
+  font-size:.65rem;
+  font-weight:700;
+  cursor:pointer;
+  letter-spacing:1px;
+  white-space:nowrap;
+  transition:all .18s;
+  flex-shrink:0;
+  min-height:44px;
+  box-shadow:0 0 12px rgba(155,89,255,.2);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.fb:active{background:rgba(155,89,255,.45);transform:scale(.94)}
+.fb.loading{color:rgba(155,89,255,.4);cursor:not-allowed;box-shadow:none}
 .hi{display:none}
 
 /* ══ SHARED ══ */
@@ -377,7 +456,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 <div class="aipanel" id="aipanel">
   <div class="aih">
     <div class="aihb">🐺 FENRIR — AI CORE</div>
-    <div class="aihx" onclick="closeAI()">✕</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div id="ai-poll-btn" onclick="pollBotMessages()" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.25);border-radius:3px;cursor:pointer;font-size:13px;color:var(--g)" title="رفرش پیام‌های بات">🔄</div>
+      <div class="aihx" onclick="closeAI()">✕</div>
+    </div>
   </div>
   <div class="ailog" id="ailog"></div>
   <div class="aiibar">
@@ -556,20 +638,37 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
     </div>
   </div>
 
-  <!-- CAPTURE BAR -->
+    <!-- CAPTURE BAR — redesigned for easy use -->
   <div class="capbar">
     <input type="file" id="ii" class="hi" accept="image/*,video/*" onchange="hmed(this,'image')">
     <input type="file" id="iv" class="hi" accept="audio/*" onchange="hmed(this,'voice')">
     <input type="file" id="id2" class="hi" accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx" onchange="hmed(this,'document')">
-    <div class="mbtns">
-      <div class="mb" onclick="document.getElementById('ii').click()" title="عکس/ویدیو">📎</div>
-      <div class="mb c" id="cap-mic" onclick="capToggleMic()" title="صدا">🎙️</div>
-      <div class="mb g" onclick="document.getElementById('id2').click()" title="سند">📄</div>
-      <div class="mb ai" onclick="openAI()" title="AI">🐺</div>
+    <!-- Row 1: media buttons -->
+    <div class="cap-media-row">
+      <div class="mb-wrap">
+        <div class="mb" onclick="document.getElementById('ii').click()">📷</div>
+        <span class="mb-label">عکس</span>
+      </div>
+      <div class="mb-wrap">
+        <div class="mb c" id="cap-mic" onclick="capToggleMic()">🎙️</div>
+        <span class="mb-label">ویس</span>
+      </div>
+      <div class="mb-wrap">
+        <div class="mb g" onclick="document.getElementById('id2').click()">📄</div>
+        <span class="mb-label">فایل</span>
+      </div>
+      <div class="mb-wrap">
+        <div class="mb ai" onclick="openAI()">🐺</div>
+        <span class="mb-label">فنریر</span>
+      </div>
     </div>
-    <input class="cap-in" id="cin" placeholder="متن، ایده، تسک... هر چیزی 🐺" onkeydown="if(event.key==='Enter') doCapture()">
-    <button class="fb" id="fb" onclick="doCapture()">▶ FIRE</button>
+    <!-- Row 2: text input + fire -->
+    <div class="cap-input-row">
+      <input class="cap-in" id="cin" placeholder="هر چیزی که تو ذهنته... متن، ایده، تسک 🐺" onkeydown="if(event.key==='Enter')doCapture()">
+      <button class="fb" id="fb" onclick="doCapture()">▶ FIRE</button>
+    </div>
   </div>
+</div>
 </div>
 
 <script>
@@ -665,11 +764,10 @@ async function apiFetch(url, opts={}){
 async function loadLive(){
   slog('SYNC → orca-9595 Sheets...');
   try {
-    // Second Brain v3: GET /items?since_hours=168
-    // Returns { found: bool, items: [...], existing_id: null }
-    const d = await apiFetch(API.ITEMS + '?since_hours=168');
-    
-    // Parse Second Brain v3 response format
+    // Second Brain v3 GET /items?since_hours=720 (30 days)
+    // Returns { found, items, existing_id }
+    const d = await apiFetch(API.ITEMS + '?since_hours=720');
+
     let arr = [];
     if (d && Array.isArray(d.items) && d.items.length > 0) {
       arr = d.items;
@@ -680,25 +778,30 @@ async function loadLive(){
     }
 
     if (arr.length > 0) {
+      // Sort by created_at descending — newest first
+      arr.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0));
+
       T = arr.map(it => ({
-        id:          it.id || String(Date.now() + Math.random()),
-        text:        it.content || '',
-        type:        it.item_type || 'note',
-        priority:    it.priority || 'normal',
-        done:        (it.status === 'done'),
-        tags:        parseTags(it.tags_json || it.tags),
-        ts:          new Date(it.created_at || Date.now()).getTime(),
-        external_id: it.external_id || String(it.id || ''),
-        source:      it.source || 'sheet',
+        id:              it.id || String(Date.now() + Math.random()),
+        text:            it.content || '',
+        type:            it.item_type || 'note',
+        priority:        it.priority || 'normal',
+        done:            (it.status === 'done'),
+        tags:            parseTags(it.tags_json || it.tags),
+        ts:              new Date(it.created_at || Date.now()).getTime(),
+        external_id:     it.external_id || String(it.id || ''),
+        source:          it.source || 'sheet',
         attachment_url:  it.attachment_url  || '',
         attachment_type: it.attachment_type || '',
       }));
       loaded = true;
-      updateSysStatus('ok', 'SHEETS ACTIVE ✓ (' + T.length + ' items)');
+      updateSysStatus('ok', 'ACTIVE ✓ (' + T.length + ' رکورد)');
       slog('LOADED: ' + T.length + ' ITEMS FROM SHEETS');
-      toast('✅ ' + T.length + ' آیتم از Sheets لود شد', 'ok');
+      toast('✅ ' + T.length + ' آیتم لود شد', 'ok');
+
+      // Show last 10 on radar immediately
+      rebuildB();
     } else {
-      // Empty sheets = demo mode
       slog('SHEETS: EMPTY — DEMO MODE');
       updateSysStatus('w', 'SHEETS EMPTY — DEMO');
       loadDemoData();
@@ -711,7 +814,6 @@ async function loadLive(){
   }
   renderAll();
   rebuildB();
-  // Update OPS panel counts
   document.getElementById('us-c').textContent = T.length;
   document.getElementById('us-s').textContent = STREAK;
 }
@@ -1005,67 +1107,77 @@ async function hmed(inp, mtype) {
   // Optimistic local add
   const newT = {
     id: 'l' + Date.now(), text: contentText, type: itemType,
-    priority: 'normal', done: false, tags: [mtype],
+    priority: 'normal', done: false, tags: [mtype, 'upload'],
     ts: Date.now(), source: 'tma', external_id: extId,
     attachment_type: mtype, attachment_url: ''
   };
   T.unshift(newT);
   renderAll(); rebuildB();
-  toast('📤 ثبت ' + f.name + '...');
+  toast('📤 در حال خواندن فایل...');
+
+  // Read file as base64 — only for small files (< 5MB)
+  const MAX_SIZE = 5 * 1024 * 1024;
+  let b64data = '';
+  let attachUrl = '';
+
+  if (f.size <= MAX_SIZE) {
+    try {
+      b64data = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = e => res(e.target.result); // data:mime;base64,xxx
+        reader.onerror = () => rej(new Error('read error'));
+        reader.readAsDataURL(f);
+      });
+      attachUrl = b64data; // store inline as data URL in attachment_url
+    } catch(e) {
+      slog('FILE READ ERR: ' + e.message);
+    }
+  } else {
+    toast('⚠️ فایل بزرگتر از ۵MB — فقط متادیتا ذخیره میشه');
+  }
+
+  // Build full payload — attachment_url = base64 data URL
+  // attachment_text = filename for search
+  const payload = {
+    source:          'tma',
+    external_id:     extId,
+    content:         contentText,
+    author:          USER_ID,
+    created_at:      new Date().toISOString(),
+    item_type:       itemType,
+    priority:        'normal',
+    tags:            [mtype, 'upload'],
+    attachment_url:  attachUrl,        // base64 data URL or empty
+    attachment_type: mtype,
+    attachment_size: f.size,
+    attachment_text: f.name,           // filename for full-text search
+    raw: {
+      via: 'tma_upload',
+      filename: f.name,
+      size: f.size,
+      mime: f.type,
+      has_data: b64data.length > 0
+    }
+  };
 
   try {
-    // Send metadata via INBOUND — n8n Scout Drone normalizes it
-    // Binary file upload requires Telegram bot pipeline
-    // Here we register the attachment metadata in Second Brain directly
-    const payload = {
-      source: 'tma',
-      external_id: extId,
-      content: contentText,
-      author: USER_ID,
-      created_at: new Date().toISOString(),
-      item_type: itemType,
-      priority: 'normal',
-      tags: [mtype, 'upload'],
-      raw: { via: 'tma_upload', filename: f.name, size: f.size, type: f.type },
-      attachment_url: '',
-      attachment_type: mtype,
-      attachment_size: f.size,
-      attachment_text: '',
-      // Also wrap as message for INBOUND normalize node
-      message: {
-        message_id: Date.now(),
-        text: contentText,
-        date: Math.floor(Date.now()/1000),
-        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
-        chat: { id: parseInt(USER_ID)||5953981409 }
-      }
-    };
-
-    // Route through INBOUND for full pipeline (Cognitive Core + DB)
-    await apiFetch(API.INBOUND, { method: 'POST', body: JSON.stringify(payload) });
-    toast('✅ ' + f.name + ' ثبت شد — برای آپلود Drive از بات بفرست', 'ok');
+    // POST directly to Second Brain v3 /items
+    // INBOUND pipeline doesn't handle binary — go direct
+    const res = await apiFetch(API.ITEMS, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    // Update local item with real DB id
+    if (res && res.id) newT.id = res.id;
+    newT.attachment_url = attachUrl;
+    toast('✅ ' + f.name + ' در Sheets ثبت شد', 'ok');
     HN('success');
     burstP(window.innerWidth/2, window.innerHeight - 80);
-    slog('UPLOAD: ' + contentText.slice(0,30));
+    slog('UPLOAD OK: ' + f.name.slice(0,25) + ' (' + Math.round(f.size/1024) + 'KB)');
+    renderAll(); rebuildB();
   } catch(e) {
-    // Fallback: save directly to Second Brain items
-    try {
-      await apiFetch(API.ITEMS, {
-        method: 'POST',
-        body: JSON.stringify({
-          source: 'tma', external_id: extId, content: contentText,
-          author: USER_ID, created_at: new Date().toISOString(),
-          item_type: itemType, priority: 'normal', tags: [mtype, 'upload'],
-          raw: { via: 'tma_upload', filename: f.name, size: f.size },
-          attachment_url: '', attachment_type: mtype,
-          attachment_size: f.size, attachment_text: ''
-        })
-      });
-      toast('💾 ' + f.name + ' در Sheets ثبت شد', 'ok');
-    } catch(e2) {
-      toast('⚠️ فقط محلی ذخیره شد');
-    }
-    renderAll();
+    toast('❌ آپلود ناکام: ' + e.message.slice(0,20), 'err');
+    slog('UPLOAD FAIL: ' + e.message.slice(0,30));
   }
 }
 
@@ -1426,63 +1538,91 @@ async function aiSend() {
   H('light');
   aiTyping(true);
 
-  try {
-    // Route through INBOUND — Cognitive Core gives Persian AI response via TG
-    // Also save to Second Brain DB
-    const extId = 'chat_' + Date.now();
-    const payload = {
-      source: 'tma',
-      external_id: extId,
-      content: text || '[attachment]',
-      author: USER_ID,
-      created_at: new Date().toISOString(),
-      message: {
-        message_id: Date.now(),
-        text: text || '[attachment]',
-        date: Math.floor(Date.now()/1000),
-        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
-        chat: { id: parseInt(USER_ID)||5953981409 }
-      }
-    };
+  const extId = 'chat_' + Date.now();
 
-    // Try INBOUND first (full Cognitive Core pipeline)
-    const res = await apiFetch(API.INBOUND, {
+  try {
+    // ══ STRATEGY ══
+    // 1. POST to /ai/classify → get immediate AI response in panel
+    // 2. Also fire-and-forget to INBOUND → Telegram gets it too
+    // This way user sees response in both mini app AND Telegram
+
+    // Step 1: get AI response immediately via classify
+    const classRes = await apiFetch(API.CLASSIFY, {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        content: text || '[attachment]',
+        source: 'chat',
+        user_id: USER_ID
+      })
     });
+
     aiTyping(false);
 
-    // INBOUND returns {status:"received",ok:true} — AI response goes to Telegram
-    const reply = res.assistant_message || res.reply || res.summary ||
-      '\u067e\u06cc\u0627\u0645\u062a \u062f\u0631\u06cc\u0627\u0641\u062a \u0634\u062f \u0641\u0631\u0645\u0627\u0646\u062f\u0647. \u067e\u0627\u0633\u062e \u0641\u0646\u0631\u06cc\u0631 \u0627\u0632 \u0628\u0627\u062a \u062a\u0644\u06af\u0631\u0627\u0645 \u0645\u06cc\u0627\u062f. \ud83d\udc3a';
-    aiMsg('b', reply);
+    // Show response in panel
+    const reply = classRes.assistant_message || classRes.summary ||
+      '[' + (classRes.item_type||'note').toUpperCase() + '] دریافت و تحلیل شد. 🐺';
+    aiMsg('b', reply, classRes.item_type ? { tag: classRes.item_type.toUpperCase() } : null);
 
-    // Optimistic add to local state
+    // Step 2: fire and forget to INBOUND (Telegram gets response via bot)
+    apiFetch(API.INBOUND, {
+      method: 'POST',
+      body: JSON.stringify({
+        source: 'tma',
+        external_id: extId,
+        content: text || '[attachment]',
+        author: USER_ID,
+        created_at: new Date().toISOString(),
+        message: {
+          message_id: Date.now(),
+          text: text || '[attachment]',
+          date: Math.floor(Date.now()/1000),
+          from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+          chat: { id: parseInt(USER_ID)||5953981409 }
+        }
+      })
+    }).catch(() => {}); // silent — Telegram response is bonus
+
+    // Step 3: save to Second Brain DB
+    apiFetch(API.ITEMS, {
+      method: 'POST',
+      body: JSON.stringify({
+        source: 'chat',
+        external_id: extId,
+        content: text,
+        author: USER_ID,
+        created_at: new Date().toISOString(),
+        item_type: classRes.item_type || 'note',
+        priority: classRes.priority || 'normal',
+        tags: parseTags(classRes.tags),
+        attachment_url: '', attachment_type: '', attachment_size: 0, attachment_text: '',
+        raw: { via: 'chat_panel', assistant_message: reply }
+      })
+    }).catch(() => {});
+
+    // Add to local state
     if (text) {
       T.unshift({
-        id: extId, text: text, type: 'note', priority: 'normal',
-        done: false, tags: ['chat'], ts: Date.now(), source: 'chat', external_id: extId
+        id: extId, text, type: classRes.item_type || 'note',
+        priority: classRes.priority || 'normal', done: false,
+        tags: parseTags(classRes.tags), ts: Date.now(),
+        source: 'chat', external_id: extId
       });
       renderAll(); rebuildB();
     }
+
+    HN('success');
+
   } catch(e) {
-    // Fallback: classify only (no full pipeline)
-    try {
-      const r = await apiFetch(API.CLASSIFY, {
-        method: 'POST',
-        body: JSON.stringify({ content: text, source: 'chat', user_id: USER_ID })
+    // Full offline fallback
+    aiTyping(false);
+    aiMsg('b', '⚠️ سرور در دسترس نیست. پیام ذخیره شد و بعداً sync میشه.');
+    // Still save locally
+    if (text) {
+      T.unshift({
+        id: extId, text, type: 'note', priority: 'normal', done: false,
+        tags: ['chat', 'offline'], ts: Date.now(), source: 'offline', external_id: extId
       });
-      aiTyping(false);
-      const reply = r.assistant_message || r.summary || '[' + (r.item_type||'note').toUpperCase() + '] \u062f\u0631\u06cc\u0627\u0641\u062a \u0634\u062f. \ud83d\udc3a';
-      aiMsg('b', reply, r.item_type ? { tag: r.item_type.toUpperCase() } : null);
-      if (text && r.item_type) {
-        T.unshift({ id:'c'+Date.now(), text, type:r.item_type, priority:r.priority||'normal',
-          done:false, tags:parseTags(r.tags), ts:Date.now(), source:'chat', external_id:'c'+Date.now() });
-        renderAll(); rebuildB();
-      }
-    } catch(e2) {
-      aiTyping(false);
-      aiMsg('b', '\u26a0\ufe0f \u0647\u0633\u062a\u0647 \u0645\u0648\u0642\u062a\u0627\u064b \u0622\u0641\u0644\u0627\u06cc\u0646\u0647. \u0628\u0639\u062f\u0627\u064b \u062f\u0648\u0628\u0627\u0631\u0647 \u0627\u0645\u062a\u062d\u0627\u0646 \u06a9\u0646.');
+      renderAll(); rebuildB();
     }
   }
   aiAttachFile = null;
@@ -1538,6 +1678,48 @@ async function aiToggleMic(){
   }
 }
 function aiStopRec(){ if(aiRec && aiRec.state!=='inactive') aiRec.stop() }
+
+/* ══ POLL BOT MESSAGES — fetch new items/bot responses from Sheets ══ */
+let lastPollTs = Date.now() - 300000;
+async function pollBotMessages() {
+  const btn = document.getElementById('ai-poll-btn');
+  if (btn) btn.style.opacity = '0.4';
+  try {
+    const sinceHours = Math.max(0.1, (Date.now() - lastPollTs) / 3600000 + 0.05).toFixed(3);
+    const d = await apiFetch(API.ITEMS + '?since_hours=' + sinceHours);
+    let arr = [];
+    if (d && Array.isArray(d.items)) arr = d.items;
+    else if (Array.isArray(d)) arr = d;
+
+    let newMsgs = 0;
+    arr.forEach(it => {
+      let raw = {};
+      try { raw = JSON.parse(it.raw_json || '{}'); } catch(e) {}
+      const ts = new Date(it.created_at || 0).getTime();
+      if (ts > lastPollTs && raw.assistant_message && it.source !== 'chat') {
+        aiMsg('b', raw.assistant_message, it.item_type ? { tag: it.item_type.toUpperCase() } : null);
+        newMsgs++;
+      }
+      const exists = T.find(x => x.id === it.id);
+      if (!exists) {
+        T.unshift({
+          id: it.id, text: it.content || '', type: it.item_type || 'note',
+          priority: it.priority || 'normal', done: (it.status === 'done'),
+          tags: parseTags(it.tags_json || it.tags),
+          ts: new Date(it.created_at || Date.now()).getTime(),
+          external_id: it.external_id || it.id, source: it.source || 'sheet'
+        });
+      }
+    });
+    lastPollTs = Date.now();
+    if (newMsgs > 0) toast('🐺 ' + newMsgs + ' پیام جدید از فنریر', 'ok');
+    else toast('پیام جدیدی نیست', '', 1500);
+    renderAll(); rebuildB();
+  } catch(e) {
+    toast('⚠️ رفرش ناکام', 'err', 2000);
+  }
+  if (btn) btn.style.opacity = '1';
+}
 
 /* ════════════════════════════════════
    CAPTURE BAR MIC (voice → orca-9595 whisper)
