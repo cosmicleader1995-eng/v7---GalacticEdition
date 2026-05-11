@@ -14,13 +14,69 @@
   document.head.appendChild(s);
 })();
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Reem+Kufi+Fun:wght@400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700;800&family=Lalezar&display=swap" rel="stylesheet" onerror="this.remove()">
 <style>
-/* Fallback fonts for when Google Fonts is blocked */
+/* ══ PERSIAN COSMIC FONT STACK ══
+   Trick: declare @font-face with unicode-range so the browser auto-picks the
+   right font per character. Latin/numbers → Orbitron/Rajdhani (epic Western).
+   Arabic/Persian range (U+0600-06FF + U+FB50-FDFF + U+FE70-FEFF) → Reem Kufi
+   for display, Vazirmatn for body. This means we don't have to manually tag
+   text as Persian — it just works. */
+
+/* Display: Persian geometric/cosmic for headlines, brand, buttons */
+@font-face {
+  font-family: 'CosmicFa';
+  src: local('Reem Kufi Fun'), local('Reem Kufi');
+  font-weight: 400;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C, U+200F;
+}
+@font-face {
+  font-family: 'CosmicFa';
+  src: local('Reem Kufi Fun'), local('Reem Kufi');
+  font-weight: 700;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C, U+200F;
+}
+
+/* Body: Persian readable for missions, chat, captions */
+@font-face {
+  font-family: 'BodyFa';
+  src: local('Vazirmatn');
+  font-weight: 300 800;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C, U+200F;
+}
+
+/* Accent: bold pop for XP/streak counters */
+@font-face {
+  font-family: 'AccentFa';
+  src: local('Lalezar');
+  font-weight: 400;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C, U+200F;
+}
+/* ══ PERSIAN TEXT POLISH ══
+   When Persian/Arabic chars render via CosmicFa/BodyFa, they need slightly
+   different metrics for visual balance with the Latin display fonts. */
 :root {
   --font-orbitron: 'Orbitron', 'Courier New', monospace;
   --font-rajdhani: 'Rajdhani', Tahoma, 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+/* Force latin numerals even inside Persian text for that cosmic monospace feel */
+.sv, .clk, .xpval, .stnum, .lp, .ld {
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+/* Persian/Arabic characters get a touch more spacing and lower contrast for elegance */
+:lang(fa), [dir="rtl"], .aim, .aimsg, .mt, .bt-tx, .bn, .cap-in, .aii {
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-feature-settings: 'kern' 1, 'liga' 1;
+}
+
+/* The brand badge in RTL with Reem Kufi looks tall — pull tighter line-height */
+.bn, .aihb, .itl {
+  line-height: 1.15;
 }
 </style>
 <style>
@@ -33,7 +89,7 @@
   --bd:rgba(155,89,255,.22);--bdg:rgba(0,255,136,.18);
   --safe:env(safe-area-inset-bottom,0px);
 }
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var(--wh);font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var(--wh);font-family:'Rajdhani','BodyFa',Tahoma,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
 #cosmos{position:fixed;inset:0;z-index:0;pointer-events:none}
 .scan{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(108,47,255,.011) 3px,rgba(108,47,255,.011) 4px)}
 /* vignette for cinematic depth */
@@ -62,14 +118,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 /* energy sparks orbiting wormhole */
 .whspk{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cy);box-shadow:0 0 8px var(--cy);pointer-events:none;animation:orbspk linear infinite}
 @keyframes orbspk{from{transform:rotate(0deg) translateX(115px) rotate(0deg)}to{transform:rotate(360deg) translateX(115px) rotate(-360deg)}}
-.itl{font-family:'Orbitron','Courier New',monospace;font-size:clamp(2.1rem,7.5vw,3.1rem);font-weight:900;letter-spacing:.25em;text-align:center;line-height:1;background:linear-gradient(135deg,var(--g) 0%,var(--cy) 35%,var(--vi) 65%,var(--g) 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shm 4s linear infinite,fu .8s .2s both;filter:drop-shadow(0 0 26px rgba(0,255,136,.35))}
+.itl{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:clamp(2.1rem,7.5vw,3.1rem);font-weight:900;letter-spacing:.25em;text-align:center;line-height:1;background:linear-gradient(135deg,var(--g) 0%,var(--cy) 35%,var(--vi) 65%,var(--g) 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shm 4s linear infinite,fu .8s .2s both;filter:drop-shadow(0 0 26px rgba(0,255,136,.35))}
 @keyframes shm{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 @keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.isub{font-family:'Share Tech Mono','Courier New',monospace;font-size:.7rem;letter-spacing:.4em;color:rgba(155,89,255,.58);margin-top:.45rem;text-align:center;animation:fu .8s .4s both}
-.itag{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:clamp(.88rem,2.7vw,1.02rem);font-weight:300;color:rgba(232,240,255,.5);text-align:center;margin-top:.4rem;animation:fu .8s .6s both;direction:rtl}
+.isub{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:.7rem;letter-spacing:.4em;color:rgba(155,89,255,.58);margin-top:.45rem;text-align:center;animation:fu .8s .4s both}
+.itag{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:clamp(.88rem,2.7vw,1.02rem);font-weight:300;color:rgba(232,240,255,.5);text-align:center;margin-top:.4rem;animation:fu .8s .6s both;direction:rtl}
 .itag em{color:var(--g);font-style:normal;font-weight:600}
 .itag strong{color:var(--vi);font-weight:600}
-.enb{margin-top:2.2rem;position:relative;display:inline-flex;align-items:center;gap:.7rem;padding:.9rem 2.3rem;border:1px solid rgba(0,255,136,.45);background:rgba(0,255,136,.06);color:var(--g);font-family:'Orbitron','Courier New',monospace;font-size:.68rem;font-weight:700;letter-spacing:.22em;cursor:pointer;overflow:hidden;animation:fu .8s .9s both,bg 3s 2s ease-in-out infinite;transition:all .25s}
+.enb{margin-top:2.2rem;position:relative;display:inline-flex;align-items:center;gap:.7rem;padding:.9rem 2.3rem;border:1px solid rgba(0,255,136,.45);background:rgba(0,255,136,.06);color:var(--g);font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.68rem;font-weight:700;letter-spacing:.22em;cursor:pointer;overflow:hidden;animation:fu .8s .9s both,bg 3s 2s ease-in-out infinite;transition:all .25s}
 @keyframes bg{0%,100%{box-shadow:0 0 10px rgba(0,255,136,.22)}50%{box-shadow:0 0 34px rgba(0,255,136,.55),0 0 70px rgba(0,255,136,.22)}}
 .enb::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,255,136,.15),transparent);transform:translateX(-100%);transition:transform .5s}
 .enb:hover::before{transform:translateX(100%)}
@@ -98,13 +154,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 }
 .brand{display:flex;align-items:center;gap:8px}
 .wico{width:30px;height:30px;flex-shrink:0;filter:drop-shadow(0 0 8px var(--pu))}
-.bn{font-family:'Orbitron','Courier New',monospace;font-size:.86rem;font-weight:900;letter-spacing:.2em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.bv{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:2.2px;color:rgba(155,89,255,.55);margin-top:1px;font-weight:700}
+.bn{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.86rem;font-weight:900;letter-spacing:.2em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.bv{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7.5px;letter-spacing:2.2px;color:rgba(155,89,255,.55);margin-top:1px;font-weight:700}
 .tbr{display:flex;align-items:center;gap:9px}
-.lp{display:flex;align-items:center;gap:5px;padding:4px 9px;border:1px solid rgba(0,255,136,.32);background:rgba(0,255,136,.06);border-radius:8px;font-family:'Share Tech Mono','Courier New',monospace;font-size:8.5px;letter-spacing:1.6px;color:var(--g);font-weight:700}
+.lp{display:flex;align-items:center;gap:5px;padding:4px 9px;border:1px solid rgba(0,255,136,.32);background:rgba(0,255,136,.06);border-radius:8px;font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8.5px;letter-spacing:1.6px;color:var(--g);font-weight:700}
 .ld{width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 10px var(--g);animation:ld 1.5s infinite}
 @keyframes ld{0%,100%{opacity:1}50%{opacity:.3}}
-.clk{font-family:'Orbitron','Courier New',monospace;font-size:.85rem;font-weight:700;color:var(--g);letter-spacing:2.2px;text-shadow:0 0 16px rgba(0,255,136,.6)}
+.clk{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.85rem;font-weight:700;color:var(--g);letter-spacing:2.2px;text-shadow:0 0 16px rgba(0,255,136,.6)}
 
 /* TABS */
 .tabs{
@@ -116,7 +172,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .tab{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   padding:9px 3px;
-  font-family:'Share Tech Mono','Courier New',monospace;
+  font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;
   font-size:8px;letter-spacing:1.4px;font-weight:700;
   color:rgba(155,89,255,.42);
   cursor:pointer;transition:all .25s;
@@ -186,7 +242,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   border:1px solid rgba(155,89,255,.22);
   border-radius:12px;
   color:var(--wh);
-  font-family:'Share Tech Mono','Courier New',monospace;
+  font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;
   cursor:pointer;
   transition:transform .15s, background .18s, border-color .18s, box-shadow .18s;
   -webkit-tap-highlight-color:transparent;
@@ -262,7 +318,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   position:relative;
 }
 .cap-plus-i{
-  font-family:'Orbitron','Courier New',monospace;
+  font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;
   font-size:22px;font-weight:300;line-height:1;
   transition:transform .3s cubic-bezier(.5,1.7,.4,1);
   display:block;
@@ -279,7 +335,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   background:transparent;
   border:none;
   color:var(--wh);
-  font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;
+  font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;
   font-size:15px;font-weight:500;
   padding:10px 12px;
   outline:none;
@@ -326,7 +382,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   background:linear-gradient(135deg,rgba(0,212,255,.16),rgba(155,89,255,.08));
   border:1px solid rgba(0,212,255,.45);
   border-radius:8px;
-  font-family:'Share Tech Mono','Courier New',monospace;
+  font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;
   font-size:10px;color:var(--cy);
   margin-inline-end:4px;
   flex-shrink:0;
@@ -342,7 +398,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 }
 
 /* ══ SHARED ══ */
-.sttl{font-family:'Orbitron','Courier New',monospace;font-size:.62rem;font-weight:700;letter-spacing:.22em;color:var(--vi);text-transform:uppercase;margin-bottom:.85rem;padding-bottom:.5rem;border-bottom:1px solid rgba(155,89,255,.16);display:flex;align-items:center;gap:7px}
+.sttl{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.62rem;font-weight:700;letter-spacing:.22em;color:var(--vi);text-transform:uppercase;margin-bottom:.85rem;padding-bottom:.5rem;border-bottom:1px solid rgba(155,89,255,.16);display:flex;align-items:center;gap:7px}
 .sttl::before{content:'';width:3px;height:13px;background:linear-gradient(180deg,var(--g),var(--cy),var(--vi));border-radius:2px;flex-shrink:0;box-shadow:0 0 8px var(--vi)}
 .card{
   background:linear-gradient(135deg, rgba(8,2,40,.78) 0%, rgba(4,0,28,.92) 100%);
@@ -359,7 +415,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .card::after{content:'';position:absolute;bottom:0;left:0;width:40%;height:1px;background:linear-gradient(90deg,var(--g),transparent);opacity:.45}
 
 /* TOAST */
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:200;background:rgba(6,0,36,.97);border:1px solid var(--pu);border-radius:10px;padding:9px 18px;font-family:'Share Tech Mono','Courier New',monospace;font-size:11px;color:var(--vi);letter-spacing:1.2px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 6px 28px rgba(108,47,255,.35)}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:200;background:rgba(6,0,36,.97);border:1px solid var(--pu);border-radius:10px;padding:9px 18px;font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:11px;color:var(--vi);letter-spacing:1.2px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 6px 28px rgba(108,47,255,.35)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.ok{border-color:var(--g);color:var(--g);box-shadow:0 6px 28px rgba(0,255,136,.35)}
 .toast.err{border-color:var(--re);color:var(--re);box-shadow:0 6px 28px rgba(255,68,102,.35)}
@@ -380,11 +436,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .sbox:hover{transform:translateY(-2px);border-color:rgba(192,132,252,.45);box-shadow:0 8px 26px rgba(108,47,255,.35)}
 .sbox::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.4}
 .sbox::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vi),transparent);opacity:.32}
-.sv{font-family:'Orbitron','Courier New',monospace;font-size:1.65rem;font-weight:800;line-height:1;margin-bottom:5px;letter-spacing:-.02em}
+.sv{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:1.65rem;font-weight:800;line-height:1;margin-bottom:5px;letter-spacing:-.02em}
 .sv.r{color:var(--re);text-shadow:0 0 22px rgba(255,68,102,.6),0 0 4px rgba(255,68,102,.9)}
 .sv.g{color:var(--g);text-shadow:0 0 22px rgba(0,255,136,.6),0 0 4px rgba(0,255,136,.9)}
 .sv.p{color:var(--vi);text-shadow:0 0 22px rgba(192,132,252,.6),0 0 4px rgba(192,132,252,.9)}
-.sl{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.4);font-weight:600}
+.sl{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.4);font-weight:600}
 
 /* Radar wrapper — glass dome effect */
 .rw{
@@ -421,9 +477,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 /* BLIP TOOLTIP */
 .btt{position:fixed;z-index:999;background:rgba(4,0,30,.97);border:1px solid var(--pu);border-radius:10px;padding:10px 13px;min-width:160px;max-width:240px;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s,transform .18s;box-shadow:0 8px 32px rgba(108,47,255,.5)}
 .btt.show{opacity:1;transform:none}
-.bt-ty{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:2.2px;color:rgba(155,89,255,.7);margin-bottom:4px;font-weight:700}
-.bt-tx{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;font-weight:500;color:rgba(232,240,255,.95);direction:rtl;text-align:right;line-height:1.4}
-.bt-pr{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;margin-top:6px;letter-spacing:1.5px}
+.bt-ty{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;letter-spacing:2.2px;color:rgba(155,89,255,.7);margin-bottom:4px;font-weight:700}
+.bt-tx{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13px;font-weight:500;color:rgba(232,240,255,.95);direction:rtl;text-align:right;line-height:1.4}
+.bt-pr{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;margin-top:6px;letter-spacing:1.5px}
 
 /* AI CARD + CHAT */
 .aic{
@@ -448,8 +504,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   animation:wp 3s ease-in-out infinite;
 }
 @keyframes wp{0%,100%{box-shadow:0 0 8px rgba(155,89,255,.4)}50%{box-shadow:0 0 22px rgba(155,89,255,.85),0 0 40px rgba(0,255,136,.18)}}
-.ait{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:2.6px;color:rgba(155,89,255,.6);margin-bottom:4px;font-weight:700}
-.aim{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;font-weight:400;color:rgba(232,240,255,.78);line-height:1.55;direction:rtl;text-align:right;min-height:36px;transition:opacity .28s}
+.ait{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7.5px;letter-spacing:2.6px;color:rgba(155,89,255,.6);margin-bottom:4px;font-weight:700}
+.aim{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13px;font-weight:400;color:rgba(232,240,255,.78);line-height:1.55;direction:rtl;text-align:right;min-height:36px;transition:opacity .28s}
 .aim em{color:var(--g);font-style:normal;font-weight:600}
 .aim strong{color:var(--vi);font-weight:600}
 .aim .typing::after{content:'|';animation:bc .6s infinite}
@@ -462,7 +518,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
   border:1px solid rgba(155,89,255,.4);
   border-radius:12px;
   color:var(--vi);
-  font-family:'Orbitron','Courier New',monospace;
+  font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;
   font-size:.66rem;font-weight:700;letter-spacing:.16em;
   padding:13px;
   cursor:pointer;
@@ -481,36 +537,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .aipanel{position:fixed;inset:0;z-index:180;background:rgba(0,0,8,.94);backdrop-filter:blur(22px);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
 .aipanel.show{opacity:1;pointer-events:all}
 .aih{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,rgba(8,2,40,.95),rgba(4,0,28,.95))}
-.aihb{font-family:'Orbitron','Courier New',monospace;font-size:.78rem;font-weight:900;letter-spacing:.22em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.aihb{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.78rem;font-weight:900;letter-spacing:.22em;background:linear-gradient(135deg,var(--g),var(--cy),var(--vi));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .aihx{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.35);border-radius:10px;color:var(--re);cursor:pointer;font-size:15px;transition:all .15s}
 .aihx:active{background:rgba(255,68,102,.25);transform:scale(.92)}
 .ailog{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:11px}
 .ailog::-webkit-scrollbar{width:3px}
 .ailog::-webkit-scrollbar-thumb{background:rgba(155,89,255,.35);border-radius:2px}
-.aimsg{max-width:82%;padding:11px 14px;border-radius:13px;font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;line-height:1.6;direction:rtl;text-align:right;animation:aimsgIn .28s ease;backdrop-filter:blur(6px)}
+.aimsg{max-width:82%;padding:11px 14px;border-radius:13px;font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;line-height:1.6;direction:rtl;text-align:right;animation:aimsgIn .28s ease;backdrop-filter:blur(6px)}
 @keyframes aimsgIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 .aimsg.u{align-self:flex-start;background:linear-gradient(135deg,rgba(0,212,255,.14),rgba(0,212,255,.05));border:1px solid rgba(0,212,255,.32);color:var(--wh);border-bottom-left-radius:4px}
 .aimsg.b{align-self:flex-end;background:linear-gradient(135deg,rgba(155,89,255,.16),rgba(108,47,255,.08));border:1px solid rgba(155,89,255,.38);color:var(--wh);border-bottom-right-radius:4px;box-shadow:0 4px 14px rgba(108,47,255,.18)}
 .aimsg.b strong{color:var(--g);font-weight:600}
 .aimsg.b em{color:var(--vi);font-style:normal;font-weight:600}
-.aimsg .mtag{display:inline-block;font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;padding:2px 6px;border:1px solid currentColor;border-radius:4px;margin-inline-end:5px;letter-spacing:1.3px;opacity:.8;font-weight:700}
+.aimsg .mtag{display:inline-block;font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;padding:2px 6px;border:1px solid currentColor;border-radius:4px;margin-inline-end:5px;letter-spacing:1.3px;opacity:.8;font-weight:700}
 .aityp{align-self:flex-end;display:inline-flex;gap:5px;padding:11px 14px;background:rgba(155,89,255,.1);border:1px solid rgba(155,89,255,.3);border-radius:13px}
 .aityp span{width:6px;height:6px;border-radius:50%;background:var(--vi);animation:typB 1.2s infinite}
 .aityp span:nth-child(2){animation-delay:.2s}
 .aityp span:nth-child(3){animation-delay:.4s}
 @keyframes typB{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 .aiibar{flex-shrink:0;display:flex;gap:6px;align-items:center;padding:12px 16px;padding-bottom:calc(12px + var(--safe));background:linear-gradient(180deg,rgba(4,0,30,.4),rgba(4,0,30,.98));border-top:1px solid var(--bd)}
-.aii{flex:1;background:rgba(155,89,255,.08);border:1px solid rgba(155,89,255,.3);border-radius:10px;color:var(--wh);font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;padding:11px 13px;outline:none;direction:rtl;min-width:0;transition:all .18s}
+.aii{flex:1;background:rgba(155,89,255,.08);border:1px solid rgba(155,89,255,.3);border-radius:10px;color:var(--wh);font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;padding:11px 13px;outline:none;direction:rtl;min-width:0;transition:all .18s}
 .aii:focus{border-color:var(--vi);background:rgba(155,89,255,.13);box-shadow:0 0 0 2px rgba(155,89,255,.16)}
 .aii::placeholder{color:rgba(155,89,255,.4);font-size:12.5px}
-.aisb{padding:10px 16px;background:linear-gradient(135deg,rgba(0,255,136,.18),rgba(0,255,136,.05));border:1px solid rgba(0,255,136,.45);border-radius:10px;color:var(--g);font-family:'Orbitron','Courier New',monospace;font-size:.66rem;font-weight:700;letter-spacing:1.3px;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:0 0 12px rgba(0,255,136,.25)}
+.aisb{padding:10px 16px;background:linear-gradient(135deg,rgba(0,255,136,.18),rgba(0,255,136,.05));border:1px solid rgba(0,255,136,.45);border-radius:10px;color:var(--g);font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.66rem;font-weight:700;letter-spacing:1.3px;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:0 0 12px rgba(0,255,136,.25)}
 .aisb:active{transform:scale(.94);box-shadow:0 0 18px rgba(0,255,136,.5)}
 .aimic{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.32);border-radius:10px;cursor:pointer;font-size:16px;color:var(--cy);transition:all .15s}
 .aimic:active{transform:scale(.92)}
 .aimic.rec{background:rgba(255,68,102,.22);border-color:var(--re);color:var(--re);animation:recpul 1s infinite}
 .aiatt{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(155,89,255,.08);border:1px solid rgba(155,89,255,.28);border-radius:10px;cursor:pointer;font-size:15px;color:var(--vi);transition:all .15s}
 .aiatt:active{transform:scale(.92)}
-.aipv{align-self:flex-start;display:flex;gap:6px;align-items:center;padding:6px 10px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.25);border-radius:6px;font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--cy);max-width:82%}
+.aipv{align-self:flex-start;display:flex;gap:6px;align-items:center;padding:6px 10px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.25);border-radius:6px;font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;color:var(--cy);max-width:82%}
 .aipv img{max-width:120px;max-height:80px;border-radius:6px}
 
 /* ══ PAGE 1 — MISSIONS ══ */
@@ -518,7 +574,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .frow::-webkit-scrollbar{display:none}
 .fp{
   padding:6px 12px;flex-shrink:0;
-  font-family:'Share Tech Mono','Courier New',monospace;
+  font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;
   font-size:9px;letter-spacing:1.4px;font-weight:700;
   border:1px solid rgba(155,89,255,.25);
   color:rgba(155,89,255,.55);
@@ -558,10 +614,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .pl{background:rgba(0,255,136,.7);box-shadow:0 0 8px rgba(0,255,136,.4)}
 @keyframes ld{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(1.2)}}
 .mb2{flex:1;min-width:0}
-.mt{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;font-weight:500;color:rgba(232,240,255,.95);line-height:1.4;direction:rtl;text-align:right}
+.mt{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13.5px;font-weight:500;color:rgba(232,240,255,.95);line-height:1.4;direction:rtl;text-align:right}
 .mf{display:flex;gap:5px;margin-top:6px;justify-content:flex-end;flex-wrap:wrap}
-.mty{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:1.2px;font-weight:700;padding:2px 7px;border:1px solid;border-radius:5px;background:rgba(8,2,40,.6)}
-.mtg{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:1.2px;padding:2px 7px;border:1px solid rgba(155,89,255,.22);color:rgba(155,89,255,.55);border-radius:5px}
+.mty{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;letter-spacing:1.2px;font-weight:700;padding:2px 7px;border:1px solid;border-radius:5px;background:rgba(8,2,40,.6)}
+.mtg{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;letter-spacing:1.2px;padding:2px 7px;border:1px solid rgba(155,89,255,.22);color:rgba(155,89,255,.55);border-radius:5px}
 .mck{
   width:30px;height:30px;min-width:30px;
   border:1.5px solid rgba(155,89,255,.5);
@@ -577,7 +633,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .msn.done .mck{border-color:var(--g);background:rgba(0,255,136,.22);color:var(--g);box-shadow:0 0 10px rgba(0,255,136,.4)}
 
 /* ══ PAGE 2 — VAULT ══ */
-.vs{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.22);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:10.5px;padding:8px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.85rem;transition:all .2s}
+.vs{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.22);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:10.5px;padding:8px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.85rem;transition:all .2s}
 .vs::placeholder{color:rgba(155,89,255,.28)}
 .vs:focus{border-color:var(--pu);background:rgba(155,89,255,.09)}
 .vg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:.9rem}
@@ -585,42 +641,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .vc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pu),transparent);opacity:.45}
 .vc:active{transform:scale(.96);background:rgba(155,89,255,.1)}
 .vci{font-size:18px;margin-bottom:5px;display:block}
-.vcl{font-family:'Orbitron','Courier New',monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;color:var(--vi);display:block;margin-bottom:2px}
-.vcn{font-family:'Share Tech Mono','Courier New',monospace;font-size:.88rem;font-weight:700;color:var(--wh)}
-.vcs{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.25)}
+.vcl{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;color:var(--vi);display:block;margin-bottom:2px}
+.vcn{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:.88rem;font-weight:700;color:var(--wh)}
+.vcs{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.25)}
 .vi{padding:8px 0;border-bottom:1px solid rgba(155,89,255,.07);cursor:pointer;transition:all .12s}
 .vi:active{padding-right:5px}
-.vit{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.8);direction:rtl;text-align:right;line-height:1.3;margin-bottom:3px}
+.vit{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:12px;font-weight:500;color:rgba(232,240,255,.8);direction:rtl;text-align:right;line-height:1.3;margin-bottom:3px}
 .vim{display:flex;gap:4px;justify-content:flex-end}
-.vid{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.38)}
+.vid{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(155,89,255,.38)}
 
 /* ══ PAGE 3 — INTEL ══ */
 .rcard{background:rgba(6,0,36,.88);border:1px solid rgba(255,183,0,.25);border-radius:4px;padding:.9rem;margin-bottom:.7rem;position:relative;overflow:hidden}
 .rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--am),transparent)}
 .rtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
-.rbg{font-family:'Orbitron','Courier New',monospace;font-size:.6rem;font-weight:700;letter-spacing:.14em;padding:4px 9px;border:1px solid var(--am);color:var(--am);background:rgba(255,183,0,.06);text-shadow:0 0 10px rgba(255,183,0,.55)}
-.xpt{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--vi);letter-spacing:1.5px}
+.rbg{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.6rem;font-weight:700;letter-spacing:.14em;padding:4px 9px;border:1px solid var(--am);color:var(--am);background:rgba(255,183,0,.06);text-shadow:0 0 10px rgba(255,183,0,.55)}
+.xpt{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;color:var(--vi);letter-spacing:1.5px}
 .xpb{width:100%;height:6px;background:rgba(155,89,255,.08);border-radius:3px;overflow:hidden;position:relative}
 .xpf{height:100%;background:linear-gradient(90deg,var(--g),var(--cy),var(--vi));border-radius:3px;transition:width 1.5s cubic-bezier(.4,0,.2,1);box-shadow:0 0 10px rgba(0,255,136,.5);position:relative}
 .xpf::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:xpsh 2s linear infinite}
 @keyframes xpsh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-.xpl{display:flex;justify-content:space-between;font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;color:rgba(232,240,255,.3);margin-top:6px;letter-spacing:1.5px}
+.xpl{display:flex;justify-content:space-between;font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;color:rgba(232,240,255,.3);margin-top:6px;letter-spacing:1.5px}
 .skr{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:.7rem}
 .skb{background:rgba(6,0,36,.85);border:1px solid var(--bd);border-radius:4px;padding:9px 8px;text-align:center;position:relative;overflow:hidden}
 .skb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pu),transparent);opacity:.4}
-.skn{font-family:'Orbitron','Courier New',monospace;font-size:1.2rem;font-weight:700;color:var(--g);text-shadow:0 0 15px rgba(0,255,136,.5)}
-.skl{font-family:'Share Tech Mono','Courier New',monospace;font-size:7.5px;letter-spacing:1.5px;color:rgba(232,240,255,.35);margin-top:3px}
+.skn{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:1.2rem;font-weight:700;color:var(--g);text-shadow:0 0 15px rgba(0,255,136,.5)}
+.skl{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7.5px;letter-spacing:1.5px;color:rgba(232,240,255,.35);margin-top:3px}
 .bkd{display:flex;align-items:center;gap:7px;padding:5px 0}
 .bkc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.bkl{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;letter-spacing:1px;color:rgba(232,240,255,.6);flex:1}
-.bkv{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:var(--vi);font-weight:700}
+.bkl{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;letter-spacing:1px;color:rgba(232,240,255,.6);flex:1}
+.bkv{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;color:var(--vi);font-weight:700}
 .ll{max-height:145px;overflow-y:auto;padding:4px 0}
 .ll::-webkit-scrollbar{width:2px}
 .ll::-webkit-scrollbar-thumb{background:rgba(155,89,255,.25)}
 .lr{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid rgba(155,89,255,.05);animation:li .28s ease}
 @keyframes li{from{opacity:0;transform:translateX(4px)}to{opacity:1;transform:none}}
-.lt{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;color:rgba(155,89,255,.35);flex-shrink:0;padding-top:1px}
-.lm{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:rgba(232,240,255,.4);line-height:1.4;direction:rtl;text-align:right}
+.lt{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;color:rgba(155,89,255,.35);flex-shrink:0;padding-top:1px}
+.lm{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;color:rgba(232,240,255,.4);line-height:1.4;direction:rtl;text-align:right}
 
 /* ══ PAGE 4 — OPS ══ */
 .ucrd{background:rgba(6,0,36,.92);border:1px solid var(--bd);border-radius:4px;padding:.9rem;margin-bottom:.7rem;display:flex;align-items:center;gap:11px;position:relative;overflow:hidden}
@@ -630,18 +686,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .uav::after{content:'📷';position:absolute;inset:0;background:rgba(0,0,8,.7);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%}
 .uav:hover::after{display:flex}
 .uinfo{flex:1;min-width:0}
-.un{font-family:'Orbitron','Courier New',monospace;font-size:.78rem;font-weight:700;color:var(--vi)}
-.ur{font-family:'Share Tech Mono','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.32);margin-top:3px}
-.ubio{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:11px;color:rgba(232,240,255,.55);margin-top:5px;direction:rtl;cursor:pointer;line-height:1.4;padding:3px 5px;border-radius:2px;transition:background .2s;min-height:18px}
+.un{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.78rem;font-weight:700;color:var(--vi)}
+.ur{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:8px;letter-spacing:2px;color:rgba(232,240,255,.32);margin-top:3px}
+.ubio{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:11px;color:rgba(232,240,255,.55);margin-top:5px;direction:rtl;cursor:pointer;line-height:1.4;padding:3px 5px;border-radius:2px;transition:background .2s;min-height:18px}
 .ubio:hover{background:rgba(155,89,255,.05)}
 .ubio[contenteditable="true"]{background:rgba(155,89,255,.1);outline:1px solid var(--pu);color:var(--wh)}
 .ubio:empty::before{content:'بیو خودت رو بنویس...';color:rgba(155,89,255,.4);font-style:italic}
 .ustat{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
 .ustat .sb{background:rgba(4,0,30,.6);border:1px solid rgba(155,89,255,.15);padding:5px 3px;text-align:center;border-radius:2px}
-.ustat .sv{font-family:'Orbitron','Courier New',monospace;font-size:.72rem;font-weight:700;color:var(--g)}
-.ustat .sl{font-family:'Share Tech Mono','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.3)}
+.ustat .sv{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.72rem;font-weight:700;color:var(--g)}
+.ustat .sl{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:7px;letter-spacing:1px;color:rgba(232,240,255,.3)}
 
-.opb{width:100%;padding:11px 13px;cursor:pointer;transition:all .18s;background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;color:rgba(155,89,255,.62);font-family:'Share Tech Mono','Courier New',monospace;font-size:9.5px;letter-spacing:1.5px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;position:relative;overflow:hidden}
+.opb{width:100%;padding:11px 13px;cursor:pointer;transition:all .18s;background:rgba(6,0,36,.88);border:1px solid var(--bd);border-radius:4px;color:rgba(155,89,255,.62);font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9.5px;letter-spacing:1.5px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;position:relative;overflow:hidden}
 .opb::before{content:'';position:absolute;right:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,transparent,rgba(155,89,255,.08));transition:width .28s}
 .opb:active::before{width:100%}
 .opb:active{border-color:var(--pu);color:var(--vi)}
@@ -651,7 +707,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .opb.a{border-color:rgba(255,183,0,.18);color:rgba(255,183,0,.52)}
 .opb.a:active{border-color:var(--am);color:var(--am)}
 .opa{opacity:.4;font-size:11px}
-.ss{font-family:'Share Tech Mono','Courier New',monospace;font-size:9px;color:rgba(155,89,255,.4);line-height:1.85;direction:ltr;text-align:left}
+.ss{font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:9px;color:rgba(155,89,255,.4);line-height:1.85;direction:ltr;text-align:left}
 .ss .ok{color:var(--g)} .ss .w{color:var(--am)} .ss .er{color:var(--re)}
 
 /* REMINDER/REPORT MODAL */
@@ -659,16 +715,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
 .modal.show{opacity:1;pointer-events:all}
 .modal-box{width:100%;max-width:480px;max-height:86vh;overflow-y:auto;background:rgba(6,0,36,.98);border:1px solid var(--bd);border-radius:12px 12px 0 0;padding:1.5rem;padding-bottom:calc(1.5rem + var(--safe));transform:translateY(20px);transition:transform .25s}
 .modal.show .modal-box{transform:none}
-.modal-ttl{font-family:'Orbitron','Courier New',monospace;font-size:.72rem;font-weight:700;letter-spacing:.2em;color:var(--pu);margin-bottom:1rem}
-.minp{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','Courier New',monospace;font-size:11px;padding:9px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.6rem;transition:all .2s}
+.modal-ttl{font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.72rem;font-weight:700;letter-spacing:.2em;color:var(--pu);margin-bottom:1rem}
+.minp{width:100%;background:rgba(155,89,255,.05);border:1px solid rgba(155,89,255,.25);border-radius:3px;color:var(--wh);font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:11px;padding:9px 11px;outline:none;direction:rtl;letter-spacing:.5px;margin-bottom:.6rem;transition:all .2s}
 .minp:focus{border-color:var(--pu);background:rgba(155,89,255,.09)}
 .minp::placeholder{color:rgba(155,89,255,.3);font-size:10px}
 .mrow{display:flex;gap:.5rem;margin-top:.6rem}
-.mok{flex:1;padding:10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron','Courier New',monospace;font-size:.62rem;font-weight:700;cursor:pointer;transition:all .18s}
+.mok{flex:1;padding:10px;background:rgba(155,89,255,.14);border:1px solid rgba(155,89,255,.4);border-radius:3px;color:var(--vi);font-family:'Orbitron','CosmicFa','Reem Kufi Fun','Courier New',monospace;font-size:.62rem;font-weight:700;cursor:pointer;transition:all .18s}
 .mok:active{background:rgba(155,89,255,.28)}
-.mcn{flex:1;padding:10px;background:transparent;border:1px solid rgba(155,89,255,.2);border-radius:3px;color:rgba(155,89,255,.48);font-family:'Share Tech Mono','Courier New',monospace;font-size:.62rem;cursor:pointer;transition:all .18s}
+.mcn{flex:1;padding:10px;background:transparent;border:1px solid rgba(155,89,255,.2);border-radius:3px;color:rgba(155,89,255,.48);font-family:'Share Tech Mono','BodyFa','Vazirmatn','Courier New',monospace;font-size:.62rem;cursor:pointer;transition:all .18s}
 .mcn:active{border-color:var(--re);color:var(--re)}
-.rpbody{font-family:'Rajdhani',Tahoma,'Segoe UI',sans-serif;font-size:13px;color:rgba(232,240,255,.85);line-height:1.7;direction:rtl;text-align:right;white-space:pre-wrap;max-height:50vh;overflow-y:auto;padding:10px;background:rgba(4,0,30,.6);border:1px solid var(--bd);border-radius:3px;margin-bottom:.8rem}
+.rpbody{font-family:'Rajdhani','BodyFa','Vazirmatn',Tahoma,'Segoe UI',sans-serif;font-size:13px;color:rgba(232,240,255,.85);line-height:1.7;direction:rtl;text-align:right;white-space:pre-wrap;max-height:50vh;overflow-y:auto;padding:10px;background:rgba(4,0,30,.6);border:1px solid var(--bd);border-radius:3px;margin-bottom:.8rem}
 
 /* DOPAMINE PARTICLES */
 .dpar{position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:999;animation:dparB .9s ease-out forwards}
