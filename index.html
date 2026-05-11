@@ -1092,24 +1092,28 @@ const PROXIES = [
   },
 ];
 
-// Remember the working proxy across reloads via localStorage
-let WORKING_PROXY_IDX = 0;
-try {
-  const saved = parseInt(localStorage.getItem('lifeops_proxy_idx') || '0', 10);
-  if (saved >= 0 && saved < PROXIES.length) WORKING_PROXY_IDX = saved;
-} catch(_) {}
+// Clear any stale persisted proxy index (kept by older versions) — it caused
+// the wrong proxy to be tried first after reload.
+try { localStorage.removeItem('lifeops_proxy_idx'); } catch(_) {}
 
-// Load custom proxy URL (Cloudflare Worker) from storage and prepend to PROXIES
+// Load custom proxy URL (Cloudflare Worker) from storage and prepend to PROXIES.
+// MUST happen BEFORE reading the saved index, because adding/removing custom
+// shifts all indices. We just always start from 0 (custom or first public) and
+// let apiFetch find the working one on first call.
 try {
   const customUrl = localStorage.getItem('lifeops_custom_proxy');
   if (customUrl && customUrl.startsWith('http')) {
     PROXIES.unshift({
       name: 'custom',
+      // Use path-style routing so the Worker's `?url=` query forwards correctly
       build: (url) => customUrl.replace(/\/+$/, '') + '/?url=' + encodeURIComponent(url),
     });
-    WORKING_PROXY_IDX = 0; // try custom first
   }
 } catch(_) {}
+
+// Track the last-working proxy in memory (NOT persisted across reloads — the
+// proxy list can change shape, and a stale index can point to the wrong one).
+let WORKING_PROXY_IDX = 0;
 
 function setCustomProxy() {
   const current = (() => { try { return localStorage.getItem('lifeops_custom_proxy') || ''; } catch(_) { return ''; } })();
@@ -1148,7 +1152,6 @@ async function apiFetch(url, opts={}){
       ]);
       if (!r.ok) { lastErr = new Error('HTTP ' + r.status + ' via ' + proxy.name); continue; }
       WORKING_PROXY_IDX = idx;
-      try { localStorage.setItem('lifeops_proxy_idx', String(idx)); } catch(_) {}
       const ct = r.headers.get('content-type') || '';
       if (ct.includes('json')) return await r.json();
       const txt = await r.text();
