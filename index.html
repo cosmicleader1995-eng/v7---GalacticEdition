@@ -890,8 +890,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
           GOOGLE SHEETS: <span class="ok">SYNCED</span><br>
           REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>
           AI GATEWAY: <span class="ok">ONLINE</span><br>
-          TG BOT: <span class="ok">CONNECTED</span>
+          TG BOT: <span class="ok">CONNECTED</span><br>
+          CORS PROXY: <span class="ok" id="proxy-status">corsproxy.io</span>
         </div>
+        <button class="opb" style="margin-top:.7rem" onclick="diagnose(this)"><span>🔬 تست اتصال (Diagnose)</span><span class="opa">↗</span></button>
       </div>
     </div>
   </div>
@@ -1035,24 +1037,80 @@ function burstP(x,y){
 /* ══ LOCAL STATE ══ */
 let T=[], CF='all', loaded=false;
 
-/* ══ FETCH WRAPPER — uses application/json which n8n body-parser expects ══
-   The Second Brain "Parse -- POST Payload" reads req.body.source / req.body.content / etc.
-   It needs the body to be parsed as JSON. Sending text/plain breaks all field reads.
-   CORS is handled server-side by n8n response headers (already configured). */
+/* ══ FETCH WRAPPER — n8n Cloud CORS bypass via public proxy ══
+   ROOT CAUSE: n8n Cloud webhooks don't respond to OPTIONS preflight requests
+   (known limitation per github.com/n8n-io/n8n/issues/18143 + corsproxy.io blog).
+   Setting Access-Control headers on the Webhook node only applies AFTER the workflow
+   runs — but the browser sends OPTIONS BEFORE the workflow even starts.
+
+   SOLUTION: Route every request through a public CORS proxy that adds the
+   Access-Control-Allow-Origin: * header on every response, INCLUDING OPTIONS.
+   We try multiple proxies in order; if one fails, the next is tried.
+
+   The free corsproxy.io plan allows requests from:
+     • localhost / 127.0.0.1
+     • *.github.io, *.ngrok.io, *.trycloudflare.com
+     • Sandboxes: CodePen, JSFiddle, CodeSandbox, StackBlitz, Replit, Glitch, Gitpod
+   This covers our deployment (GitHub Pages). */
+
+const PROXIES = [
+  // Primary: corsproxy.io — works for github.io without an API key
+  {
+    name: 'corsproxy.io',
+    build: (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+  },
+  // Fallback 1: killcors.com — no account, no rate limit
+  {
+    name: 'killcors',
+    build: (url) => 'https://proxy.killcors.com/?url=' + encodeURIComponent(url),
+  },
+  // Fallback 2: codetabs.com — older but still alive
+  {
+    name: 'codetabs',
+    build: (url) => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url),
+  },
+  // Last resort: direct (will only work if n8n CORS is somehow configured server-side)
+  {
+    name: 'direct',
+    build: (url) => url,
+  },
+];
+
+// Remember which proxy worked last so we don't keep retrying broken ones
+let WORKING_PROXY_IDX = 0;
+
 async function apiFetch(url, opts={}){
   const method = (opts.method || 'GET').toUpperCase();
   const headers = { ...opts.headers };
   if ((method === 'POST' || method === 'PUT') && typeof opts.body === 'string') {
     if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
   }
-  try {
-    const r = await fetch(url, { method, headers, body: opts.body, mode: 'cors' });
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    const ct = r.headers.get('content-type')||'';
-    if(ct.includes('json')) return await r.json();
-    const txt = await r.text();
-    try { return JSON.parse(txt); } catch { return {raw:txt}; }
-  } catch(e) { throw e }
+  // Try the proxy that worked last time first, then the others in order
+  const order = [WORKING_PROXY_IDX, ...PROXIES.map((_, i) => i).filter(i => i !== WORKING_PROXY_IDX)];
+  let lastErr = null;
+  for (const idx of order) {
+    const proxy = PROXIES[idx];
+    const proxiedUrl = proxy.build(url);
+    try {
+      const r = await fetch(proxiedUrl, {
+        method, headers, body: opts.body, mode: 'cors',
+        // Cache: 'no-store' avoids stale proxy responses on repeated GET to /items
+        cache: 'no-store',
+      });
+      if (!r.ok) {
+        lastErr = new Error(`HTTP ${r.status} via ${proxy.name}`);
+        continue;
+      }
+      WORKING_PROXY_IDX = idx; // remember the winner
+      const ct = r.headers.get('content-type') || '';
+      if (ct.includes('json')) return await r.json();
+      const txt = await r.text();
+      try { return JSON.parse(txt); } catch { return { raw: txt }; }
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('All CORS proxies failed');
 }
 
 /* ══ LOAD LIVE — reads from Second Brain v3 (Google Sheets via n8n) ══ */
@@ -1078,6 +1136,27 @@ async function loadLive(){
     }
 
     if (arr.length > 0) {
+      // Filter out invalid rows: missing id, header rows (id === 'id'), or completely empty content
+      arr = arr.filter(it => {
+        if (!it || !it.id) return false;
+        if (String(it.id).toLowerCase() === 'id') return false; // header row
+        if (String(it.source||'').toLowerCase() === 'source') return false; // header row
+        // Skip rows where content is empty AND there's no attachment — empty ghost row
+        const hasContent = it.content && String(it.content).trim().length > 0;
+        const hasAttachment = it.attachment_url && String(it.attachment_url).length > 0;
+        if (!hasContent && !hasAttachment) return false;
+        return true;
+      });
+
+      if (arr.length === 0) {
+        T = [];
+        slog('SHEETS: all rows invalid/empty');
+        updateSysStatus('w', 'NO VALID ROWS');
+        toast('📭 رکورد معتبری در دیتابیس نیست', '', 2800);
+        renderAll(); rebuildB();
+        return;
+      }
+
       // Sort by created_at descending — newest first
       arr.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0));
 
@@ -1147,12 +1226,14 @@ function updateSysStatus(level, msg) {
   const el = document.getElementById('syss');
   if (!el) return;
   const cls = level === 'ok' ? 'ok' : level === 'er' ? 'er' : 'w';
+  const proxyName = PROXIES[WORKING_PROXY_IDX]?.name || '?';
   el.innerHTML =
     'N8N: <span class="'+cls+'">'+msg+'</span><br>' +
     'DB: <span class="ok">SHEETS / SQLite</span><br>' +
     'REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>' +
     'AI GATEWAY: <span class="ok">FENRIR CORE</span><br>' +
-    'BOT: <span class="ok">ACTIVE</span>';
+    'BOT: <span class="ok">ACTIVE</span><br>' +
+    'CORS PROXY: <span class="ok">'+proxyName+'</span>';
 }
 
 /* ══ INTRO ══ */
@@ -1693,6 +1774,74 @@ async function opSync(btn) {
   await loadLive();
   btn.classList.remove('loading');
   toast('\ud83d\udd04 \u0647\u0645\u06af\u0627\u0645\u200c\u0633\u0627\u0632\u06cc \u06a9\u0627\u0645\u0644', 'ok');
+}
+
+/* ══ DIAGNOSE — tests each CORS proxy against the live n8n endpoint ══
+   Shows exactly which proxy works and reports the first row from /items.
+   This is the truth-teller: if all four fail, the issue is server-side. */
+async function diagnose(btn) {
+  if (btn.classList.contains('loading')) return;
+  btn.classList.add('loading');
+  H('medium');
+  openRp('🔬 Diagnostic Report', 'در حال اجرای تست‌ها...\n\n');
+
+  const lines = ['🔬 LifeOps Connectivity Diagnostic', '────────────────────────────────', ''];
+  const testUrl = N8N + '/items?since_hours=24';
+
+  for (let i = 0; i < PROXIES.length; i++) {
+    const proxy = PROXIES[i];
+    const proxied = proxy.build(testUrl);
+    const startMs = Date.now();
+    let ok = false, status = '', error = '', rowCount = '?';
+    try {
+      const r = await fetch(proxied, { method: 'GET', mode: 'cors', cache: 'no-store' });
+      status = 'HTTP ' + r.status;
+      if (r.ok) {
+        const txt = await r.text();
+        try {
+          const j = JSON.parse(txt);
+          rowCount = Array.isArray(j.items) ? j.items.length : (Array.isArray(j) ? j.length : 0);
+          ok = true;
+        } catch(_) { error = 'non-JSON response'; }
+      } else {
+        error = 'bad status';
+      }
+    } catch(e) {
+      error = e.message.slice(0, 60);
+    }
+    const ms = Date.now() - startMs;
+    const icon = ok ? '✅' : '❌';
+    lines.push(icon + ' ' + proxy.name.padEnd(14) + ' | ' + status.padEnd(10) + ' | ' + ms + 'ms');
+    if (ok) lines.push('     └─ rows returned: ' + rowCount);
+    if (error) lines.push('     └─ error: ' + error);
+    document.getElementById('rp-body').textContent = lines.join('\n');
+  }
+
+  lines.push('');
+  lines.push('────────────────────────────────');
+  lines.push('📊 خلاصه:');
+
+  const workingProxy = PROXIES[WORKING_PROXY_IDX];
+  lines.push('  Proxy فعال: ' + workingProxy.name);
+  lines.push('  وضعیت داده‌ها: ' + (T.length > 0 ? T.length + ' آیتم لود شده' : 'هیچ آیتمی'));
+  lines.push('  Browser: ' + (navigator.userAgent.includes('Telegram') ? 'Telegram WebApp' : 'Standard browser'));
+  lines.push('  Origin: ' + (location.origin || 'file://'));
+  lines.push('');
+  lines.push('🔧 پیشنهاد:');
+  const anyOk = lines.some(l => l.startsWith('✅'));
+  if (anyOk) {
+    lines.push('  ✓ حداقل یک proxy کار می‌کنه. اپ آماده‌ست.');
+  } else {
+    lines.push('  ✗ هیچ proxy کار نمی‌کنه. احتمالا:');
+    lines.push('    1) شبکه قطعه');
+    lines.push('    2) n8n cloud orca-9595 down هست');
+    lines.push('    3) Origin شما در whitelist proxy نیست');
+    lines.push('  راه‌حل: یک backend ساده برای پراکسی بساز');
+  }
+
+  openRp('🔬 Diagnostic Report', lines.join('\n'));
+  btn.classList.remove('loading');
+  document.getElementById('proxy-status').textContent = workingProxy.name;
 }
 
 function openModal() {
