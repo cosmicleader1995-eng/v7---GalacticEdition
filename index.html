@@ -1292,24 +1292,34 @@ async function loadLive(){
       // Sort by created_at descending — newest first
       arr.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0));
 
+      // Load any local state overrides (cached done/archived states)
+      const localState = loadLocalState();
+
       T = arr.map(it => {
         const tags = parseTags(it.tags_json || it.tags);
-        // `done` is derived from the synthetic 'done' tag (no status column in sheet)
-        const isDone = tags.includes('done');
+        const idStr = String(it.id || '');
+        const override = localState[idStr];
+        // `done` is derived from server tag 'done' OR a local 'done' override
+        const isDone = tags.includes('done') || override === 'done';
         return {
           id:              it.id || String(Date.now() + Math.random()),
           text:            it.content || '',
           type:            it.item_type || 'note',
           priority:        it.priority || 'normal',
           done:            isDone,
-          tags:            tags,
+          tags:            isDone && !tags.includes('done') ? [...tags, 'done'] : tags,
           ts:              new Date(it.created_at || Date.now()).getTime(),
           external_id:     it.external_id || String(it.id || ''),
           source:          it.source || 'sheet',
           attachment_url:  it.attachment_url  || '',
           attachment_type: it.attachment_type || '',
+          _localOverride:  override || null,
         };
       });
+
+      // Filter out items that the user archived locally (PUT may have failed but
+      // we respect the user's intent on this device)
+      T = T.filter(t => t._localOverride !== 'archived');
       loaded = true;
       updateSysStatus('ok', 'ACTIVE ✓ (' + T.length + ' رکورد)');
       slog('LOADED: ' + T.length + ' ITEMS FROM SHEETS');
@@ -1476,6 +1486,27 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ══ LOCAL STATE OVERRIDE — defensive backup ══
+   The Sheet has no `status` column, so we store done state in tags_json on the
+   server via PUT. But proxies are flaky; if PUT fails silently, the tick is lost
+   on next reload. We keep a localStorage mirror of {id → 'done'|'archived'} so
+   the user always sees the truth they last set, regardless of server lag. */
+const LOCAL_STATE_KEY = 'lifeops_item_state';
+
+function loadLocalState() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_STATE_KEY) || '{}') || {}; }
+  catch(_) { return {}; }
+}
+function saveLocalState(state) {
+  try { localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(state)); } catch(_) {}
+}
+function setLocalItemState(id, state) {
+  const all = loadLocalState();
+  if (state === null) delete all[id];
+  else all[id] = state;
+  saveLocalState(all);
+}
+
 /* FIX tog: all item types, dopamine burst, syncs via PUT to Second Brain.
    IMPORTANT: The Sheet has NO 'status' column. We persist `done` state by
    adding/removing the synthetic tag 'done' in tags_json. On next loadLive,
@@ -1487,6 +1518,8 @@ function tog(id) {
   // Sync done state into the tags array — this is what persists across reloads
   const baseTags = (t.tags || []).filter(x => x !== 'done');
   t.tags = t.done ? [...baseTags, 'done'] : baseTags;
+  // Defensive: also write to localStorage so state survives proxy failures
+  setLocalItemState(t.id, t.done ? 'done' : null);
   H('medium');
   renderM(); refreshS(); rebuildB();
   if (t.done) {
@@ -2056,6 +2089,76 @@ async function diagnose(btn) {
     lines.push('   ✓ اپ آماده‌ست. روی رادار آیتم‌ها میان.');
   }
 
+  // ▶ LIVE PUT TEST — if we have at least one item, attempt to mark it done and back
+  // This reveals whether the proxy actually forwards PUT bodies correctly to n8n.
+  lines.push('');
+  lines.push('🧪 Live PUT test:');
+  if (T.length === 0) {
+    lines.push('   ⚠️ هیچ آیتمی نیست برای تست. اول یه چیزی بنویس.');
+  } else {
+    // Pick the first non-done item, or the first item if all done
+    const target = T.find(t => !t.done) || T[0];
+    const url = API.ITEMS + '/' + target.id;
+    const origTags = (target.tags || []).filter(x => x !== 'done' && x !== 'test_ping');
+    const testTags = [...origTags, 'test_ping'];
+    lines.push('   آیتم تست: ' + (target.text || '(empty)').slice(0, 30));
+    lines.push('   ID: ' + target.id);
+
+    try {
+      const startMs = Date.now();
+      const putRes = await apiFetch(url, {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: target.id, source: target.source || 'tma',
+          external_id: target.external_id || target.id,
+          content: target.text, author: USER_ID,
+          created_at: new Date(target.ts).toISOString(),
+          item_type: target.type, priority: target.priority,
+          tags: testTags, attachment_url: '',
+          attachment_type: '', attachment_size: 0, attachment_text: '',
+          updated_at: new Date().toISOString()
+        })
+      });
+      const putMs = Date.now() - startMs;
+      lines.push('   ✅ PUT succeeded (' + putMs + 'ms): ' + JSON.stringify(putRes).slice(0, 80));
+
+      // Wait for sheets to settle, then re-fetch to verify
+      await new Promise(r => setTimeout(r, 1500));
+      const verify = await apiFetch(API.ITEMS + '?source=' + encodeURIComponent(target.source||'tma') + '&external_id=' + encodeURIComponent(target.external_id||target.id));
+      const verifyItems = unwrapItems(verify);
+      const verifiedRow = verifyItems.find(it => String(it.id) === String(target.id));
+      if (verifiedRow) {
+        const tagsStr = String(verifiedRow.tags_json || '');
+        if (tagsStr.includes('test_ping')) {
+          lines.push('   ✅ Verified: tags now include "test_ping" ✓');
+          lines.push('   🎉 PUT کار میکنه — تیک‌ها باید سیو شن!');
+        } else {
+          lines.push('   ❌ PUT خوب جواب داد ولی tags update نشد');
+          lines.push('      tags فعلی: ' + tagsStr.slice(0, 100));
+        }
+      } else {
+        lines.push('   ⚠️ آیتم بعد از PUT پیدا نشد (verify failed)');
+      }
+
+      // Cleanup: revert the test tag
+      await apiFetch(url, {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: target.id, source: target.source || 'tma',
+          external_id: target.external_id || target.id,
+          content: target.text, author: USER_ID,
+          created_at: new Date(target.ts).toISOString(),
+          item_type: target.type, priority: target.priority,
+          tags: origTags, attachment_url: '',
+          attachment_type: '', attachment_size: 0, attachment_text: '',
+          updated_at: new Date().toISOString()
+        })
+      }).catch(_ => {});
+    } catch(e) {
+      lines.push('   ❌ PUT failed: ' + e.message.slice(0, 80));
+    }
+  }
+
   openRp('🔬 Diagnostic Report', lines.join('\n'));
   btn.classList.remove('loading');
   const psEl = document.getElementById('proxy-status');
@@ -2191,7 +2294,11 @@ async function opClr(){
       });
     });
 
-  // Remove locally — instant UX feedback
+  // Remove locally — instant UX feedback. Also mark them archived in localStorage
+  // so they never reappear even if the server-side PUT fails.
+  for (const t of doneItems) {
+    setLocalItemState(t.id, 'archived');
+  }
   const before = T.length;
   T = T.filter(t => !t.done);
   renderAll(); rebuildB();
