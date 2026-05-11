@@ -1035,17 +1035,15 @@ function burstP(x,y){
 /* ══ LOCAL STATE ══ */
 let T=[], CF='all', loaded=false;
 
-/* ══ FETCH WRAPPER — CORS-PREFLIGHT SAFE ══
-   Browsers send OPTIONS preflight for ANY request with Content-Type: application/json.
-   n8n webhooks on free/cloud plans don't always respond to OPTIONS → request fails.
-   FIX: Use Content-Type: text/plain (a "simple request" CORS class) — no preflight.
-   The body is still JSON; n8n parses it identically (body parser is content-agnostic). */
+/* ══ FETCH WRAPPER — uses application/json which n8n body-parser expects ══
+   The Second Brain "Parse -- POST Payload" reads req.body.source / req.body.content / etc.
+   It needs the body to be parsed as JSON. Sending text/plain breaks all field reads.
+   CORS is handled server-side by n8n response headers (already configured). */
 async function apiFetch(url, opts={}){
   const method = (opts.method || 'GET').toUpperCase();
   const headers = { ...opts.headers };
-  // For POST/PUT with a string body, use text/plain to avoid preflight
   if ((method === 'POST' || method === 'PUT') && typeof opts.body === 'string') {
-    if (!headers['Content-Type']) headers['Content-Type'] = 'text/plain;charset=UTF-8';
+    if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
   }
   try {
     const r = await fetch(url, { method, headers, body: opts.body, mode: 'cors' });
@@ -1104,15 +1102,18 @@ async function loadLive(){
       // Show last 10 on radar immediately
       rebuildB();
     } else {
-      slog('SHEETS: EMPTY — DEMO MODE');
-      updateSysStatus('w', 'SHEETS EMPTY — DEMO');
-      loadDemoData();
+      // ▶ Empty sheets → empty state, no demo data injected
+      T = [];
+      slog('SHEETS: EMPTY (0 items)');
+      updateSysStatus('w', 'SHEETS EMPTY');
+      toast('📭 دیتابیس خالیه — اولین تسک رو ثبت کن!', '', 2800);
     }
   } catch(e) {
+    // ▶ Network/server error → empty state, NO fake records
+    T = [];
     updateSysStatus('er', e.message.slice(0, 32));
     slog('OFFLINE: ' + e.message.slice(0, 28));
-    toast('⚠️ آفلاین — داده‌های نمایشی', '', 3200);
-    if (T.length === 0) loadDemoData();
+    toast('⚠️ سرور در دسترس نیست — ' + e.message.slice(0,18), 'err', 3200);
   }
   renderAll();
   rebuildB();
@@ -1310,7 +1311,7 @@ async function doCapture(){
   const val = inp.value.trim();
   if (!val) return;
   const btn = document.getElementById('fb');
-  btn.classList.add('loading'); btn.textContent = '...';
+  btn.classList.add('loading');
   H('medium'); inp.value = '';
 
   // Optimistic local add — appears on radar IMMEDIATELY
@@ -1323,55 +1324,94 @@ async function doCapture(){
   renderAll(); rebuildB();
 
   try {
-    // ▶ STRATEGY (FIXED):
-    // 1) Hit /ai/classify directly — get immediate JSON response, show in-app.
-    // 2) Persist to /items so it survives reload + appears on next loadLive.
-    // 3) DO NOT hit INBOUND (which would echo response back via Telegram bot).
-    //    The user wants the response in-app, not in their Telegram chat.
+    // ▶ STRATEGY: hit INBOUND → Scout Drone runs full pipeline:
+    //   Normalize → Validate → Memory slice → Cognitive Core → Classify+Reply → DB write
+    // The Scout Drone "Normalize" node prefers a Telegram-shaped `message` object.
+    // It will return an array of items (one with assistant_message, classification, etc).
+    const payload = {
+      source: 'tma',
+      external_id: extId,
+      content: val,
+      author: USER_ID,
+      created_at: new Date().toISOString(),
+      message: {
+        message_id: Date.now(),
+        text: val,
+        date: Math.floor(Date.now()/1000),
+        from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+        chat: { id: parseInt(USER_ID)||5953981409 }
+      }
+    };
 
-    const r = await apiFetch(API.CLASSIFY, {
+    const res = await apiFetch(API.INBOUND, {
       method: 'POST',
-      body: JSON.stringify({ content: val, source: 'tma', user_id: USER_ID })
+      body: JSON.stringify(payload)
     });
 
-    // Update local item with AI classification
-    newT.type = r.item_type || 'note';
-    newT.priority = r.priority || 'normal';
-    newT.tags = parseTags(r.tags);
-
-    // Show AI's reply on the war-room AI strip (radar page)
-    const reply = r.assistant_message || r.summary || r.response || ('ثبت شد: ' + (r.item_type||'note').toUpperCase() + ' 🐺');
-    setAI(reply);
-
-    // Persist to vault — fire-and-forget but await so we get the real id
-    apiFetch(API.ITEMS, {
-      method: 'POST',
-      body: JSON.stringify({
-        source: 'tma', external_id: extId, content: val,
-        author: USER_ID, created_at: new Date().toISOString(),
-        item_type: newT.type, priority: newT.priority, tags: newT.tags,
-        attachment_url:'', attachment_type:'', attachment_size:0, attachment_text:'',
-        raw: { via: 'capture_bar', assistant_message: reply }
-      })
-    }).then(saveRes => {
-      if (saveRes && saveRes.id) newT.id = saveRes.id;
-    }).catch(()=>{});
-
-    toast('✅ ثبت شد — ' + (r.item_type||'note').toUpperCase(), 'ok');
+    // INBOUND typically replies fast with { status: 'received' } — actual classification
+    // lands in Sheets later. We poll /items to grab the classified row + assistant_message.
+    setAI('پیامت رفت تو خط فرمانده، Cognitive Core داره فکر می‌کنه...');
+    toast('✅ فرستاده شد — درحال تحلیل', 'ok', 2000);
     HN('success');
     burstP(window.innerWidth/2, window.innerHeight - 80);
-    renderAll(); rebuildB();
+
+    // Poll for classification (max 6 tries × 1.5s = 9s)
+    for (let i = 0; i < 6; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const polled = await apiFetch(API.ITEMS + '?source=tma&external_id=' + encodeURIComponent(extId));
+        const items = (polled && polled.items) || [];
+        if (items.length > 0) {
+          const row = items[0];
+          let raw = {};
+          try { raw = JSON.parse(row.raw_json || '{}'); } catch(_) {}
+          // Update local item with real classification
+          newT.id = row.id || newT.id;
+          newT.type = row.item_type || newT.type;
+          newT.priority = row.priority || newT.priority;
+          newT.tags = parseTags(row.tags_json || row.tags);
+          renderAll(); rebuildB();
+          if (raw.assistant_message) {
+            setAI(raw.assistant_message);
+            break;
+          }
+        }
+      } catch(_) {}
+    }
   } catch(e) {
-    // Total offline fallback — keep the item local
-    slog('CAPTURE FAIL: ' + e.message.slice(0,28));
-    toast('⚠️ آفلاین — محلی ذخیره شد', '', 2800);
-    setAI('پیامت محلی ذخیره شد فرمانده. وقتی شبکه برگرده sync میشه. 🐺');
+    // Fallback: try classify + items directly
+    slog('INBOUND fail: ' + e.message.slice(0,25) + ' — trying classify+items');
+    try {
+      const r = await apiFetch(API.CLASSIFY, {
+        method: 'POST',
+        body: JSON.stringify({ content: val, source: 'tma', user_id: USER_ID })
+      });
+      newT.type = r.item_type || 'note';
+      newT.priority = r.priority || 'normal';
+      newT.tags = parseTags(r.tags);
+      await apiFetch(API.ITEMS, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'tma', external_id: extId, content: val,
+          author: USER_ID, created_at: new Date().toISOString(),
+          item_type: newT.type, priority: newT.priority, tags: newT.tags,
+          attachment_url:'', attachment_type:'', attachment_size:0, attachment_text:'',
+          raw: { via: 'capture_fallback' }
+        })
+      });
+      setAI('ثبت شد فرمانده (' + newT.type.toUpperCase() + '). 🐺');
+      toast('💾 ذخیره شد', 'ok');
+      renderAll(); rebuildB();
+    } catch(e2) {
+      toast('⚠️ فقط محلی ذخیره شد', '', 2500);
+      setAI('فعلاً محلی ذخیره شد. وقتی شبکه برگرده sync میشه. 🐺');
+    }
   }
 
-  btn.classList.remove('loading'); btn.textContent = '▶ FIRE';
+  btn.classList.remove('loading');
 }
 
-/* ══ MEDIA UPLOAD — routes through INBOUND pipeline ══ */
+/* ══ MEDIA UPLOAD — direct to /items (no INBOUND for binary) ══ */
 async function hmed(inp, mtype) {
   const f = inp.files?.[0];
   if (!f) return;
@@ -1380,9 +1420,10 @@ async function hmed(inp, mtype) {
 
   const extId = mtype + '_' + Date.now();
   const itemType = mtype === 'image' ? 'image' : mtype === 'voice' ? 'voice' : 'document';
-  const contentText = '[' + mtype.toUpperCase() + '] ' + f.name;
+  const sizeKB = Math.round(f.size/1024);
+  const contentText = '[' + mtype.toUpperCase() + '] ' + f.name + ' (' + sizeKB + ' KB)';
 
-  // Optimistic local add
+  // Optimistic local add — shows on radar/missions immediately
   const newT = {
     id: 'l' + Date.now(), text: contentText, type: itemType,
     priority: 'normal', done: false, tags: [mtype, 'upload'],
@@ -1391,31 +1432,30 @@ async function hmed(inp, mtype) {
   };
   T.unshift(newT);
   renderAll(); rebuildB();
-  toast('📤 در حال خواندن فایل...');
+  toast('📤 خواندن فایل ' + sizeKB + ' KB...', '', 2000);
 
-  // Read file as base64 — only for small files (< 5MB)
-  const MAX_SIZE = 5 * 1024 * 1024;
+  // Read file as base64 data URL (data:mime;base64,xxx). Keep inline only if small.
+  // n8n + Sheets can choke on huge base64 strings; cap at 2 MB for safety.
+  const MAX_INLINE_SIZE = 2 * 1024 * 1024;
   let b64data = '';
   let attachUrl = '';
 
-  if (f.size <= MAX_SIZE) {
+  if (f.size <= MAX_INLINE_SIZE) {
     try {
       b64data = await new Promise((res, rej) => {
         const reader = new FileReader();
-        reader.onload = e => res(e.target.result); // data:mime;base64,xxx
+        reader.onload = e => res(e.target.result);
         reader.onerror = () => rej(new Error('read error'));
         reader.readAsDataURL(f);
       });
-      attachUrl = b64data; // store inline as data URL in attachment_url
+      attachUrl = b64data;
     } catch(e) {
       slog('FILE READ ERR: ' + e.message);
     }
   } else {
-    toast('⚠️ فایل بزرگتر از ۵MB — فقط متادیتا ذخیره میشه');
+    toast('⚠️ فایل > 2MB — فقط متادیتا ذخیره میشه', '', 3000);
   }
 
-  // Build full payload — attachment_url = base64 data URL
-  // attachment_text = filename for search
   const payload = {
     source:          'tma',
     external_id:     extId,
@@ -1425,10 +1465,10 @@ async function hmed(inp, mtype) {
     item_type:       itemType,
     priority:        'normal',
     tags:            [mtype, 'upload'],
-    attachment_url:  attachUrl,        // base64 data URL or empty
+    attachment_url:  attachUrl,
     attachment_type: mtype,
     attachment_size: f.size,
-    attachment_text: f.name,           // filename for full-text search
+    attachment_text: f.name,
     raw: {
       via: 'tma_upload',
       filename: f.name,
@@ -1439,22 +1479,19 @@ async function hmed(inp, mtype) {
   };
 
   try {
-    // POST directly to Second Brain v3 /items
-    // INBOUND pipeline doesn't handle binary — go direct
     const res = await apiFetch(API.ITEMS, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-    // Update local item with real DB id
     if (res && res.id) newT.id = res.id;
     newT.attachment_url = attachUrl;
-    toast('✅ ' + f.name + ' در Sheets ثبت شد', 'ok');
+    toast('✅ ' + f.name.slice(0,28) + ' ثبت شد', 'ok');
     HN('success');
     burstP(window.innerWidth/2, window.innerHeight - 80);
-    slog('UPLOAD OK: ' + f.name.slice(0,25) + ' (' + Math.round(f.size/1024) + 'KB)');
+    slog('UPLOAD OK: ' + f.name.slice(0,25) + ' (' + sizeKB + 'KB)');
     renderAll(); rebuildB();
   } catch(e) {
-    toast('❌ آپلود ناکام: ' + e.message.slice(0,20), 'err');
+    toast('❌ آپلود ناکام: ' + e.message.slice(0,18), 'err');
     slog('UPLOAD FAIL: ' + e.message.slice(0,30));
   }
 }
@@ -1839,14 +1876,22 @@ async function aiSend() {
   H('light');
   aiTyping(true);
 
-  const extId = 'chat_' + Date.now();
+  const extId = 'tma_chat_' + Date.now();
 
   try {
-    // ══ STRATEGY (FIXED) ══
-    // ONLY POST to /ai/classify → get immediate AI response in panel.
-    // We DO NOT call INBOUND — that pipeline replies via Telegram bot, which
-    // is exactly what the commander does NOT want for in-app chat.
-    // After we have the reply, we silently persist to /items so it shows on radar.
+    // ══ STRATEGY ══
+    // The full Fenrir assistant_message is generated by the Cognitive Core,
+    // which is invoked by Scout Drone via the INBOUND webhook.
+    // /ai/classify only returns item_type+priority+tags, NOT assistant_message.
+    //
+    // FLOW for in-app chat:
+    // 1. POST to INBOUND → Scout Drone fires, Cognitive Core runs, writes assistant_message
+    //    into Sheets row's raw_json field (and also replies via Telegram bot).
+    // 2. Wait ~5s, then GET /items?source=tma_chat&external_id=<id> to fetch our row.
+    // 3. Parse raw_json.assistant_message → show it in the panel.
+    //
+    // The Telegram echo is a side-effect we can't easily prevent without editing n8n,
+    // but the user sees the reply IN THE APP first (the goal).
 
     let attachmentMeta = { url:'', type:'', size:0, text:'' };
     if (aiAttachFile) {
@@ -1855,7 +1900,6 @@ async function aiSend() {
                           : f.type.startsWith('audio/') ? 'voice' : 'document';
       attachmentMeta.size = f.size;
       attachmentMeta.text = f.name;
-      // For small files only, embed as base64 data URL
       if (f.size <= 4 * 1024 * 1024) {
         try {
           attachmentMeta.url = await new Promise((res, rej) => {
@@ -1868,56 +1912,80 @@ async function aiSend() {
       }
     }
 
-    // Step 1: get AI response immediately via classify
-    const classRes = await apiFetch(API.CLASSIFY, {
-      method: 'POST',
-      body: JSON.stringify({
-        content: text || ('[' + attachmentMeta.type + '] ' + attachmentMeta.text),
-        source: 'tma_chat',
-        user_id: USER_ID,
-        attachment: attachmentMeta.url ? {
-          type: attachmentMeta.type,
-          name: attachmentMeta.text,
-          size: attachmentMeta.size
-        } : null
-      })
-    });
+    const contentText = text || ('[' + attachmentMeta.type + '] ' + attachmentMeta.text);
 
-    aiTyping(false);
-
-    // Show response in panel (THE PANEL IS THE ONLY OUTPUT — no Telegram echo)
-    const reply = classRes.assistant_message || classRes.summary || classRes.reply || classRes.response ||
-      '[' + (classRes.item_type||'note').toUpperCase() + '] دریافت و تحلیل شد. 🐺';
-    aiMsg('b', reply, classRes.item_type ? { tag: classRes.item_type.toUpperCase() } : null);
-
-    // Step 2: silently save to Second Brain so it appears on radar/missions
-    apiFetch(API.ITEMS, {
+    // Step 1: fire to INBOUND so Cognitive Core processes it
+    //   The Scout Drone "Normalize" node accepts payloads that either have a
+    //   `message` object (Telegram-shaped) OR direct top-level fields.
+    apiFetch(API.INBOUND, {
       method: 'POST',
       body: JSON.stringify({
         source: 'tma_chat',
         external_id: extId,
-        content: text || ('[' + attachmentMeta.type + '] ' + attachmentMeta.text),
+        content: contentText,
         author: USER_ID,
         created_at: new Date().toISOString(),
-        item_type: classRes.item_type || 'note',
-        priority: classRes.priority || 'normal',
-        tags: parseTags(classRes.tags),
-        attachment_url: attachmentMeta.url,
-        attachment_type: attachmentMeta.type,
-        attachment_size: attachmentMeta.size,
-        attachment_text: attachmentMeta.text,
-        raw: { via: 'chat_panel', assistant_message: reply }
+        message: {
+          message_id: Date.now(),
+          text: contentText,
+          date: Math.floor(Date.now()/1000),
+          from: { id: parseInt(USER_ID)||5953981409, username: 'tma_user', first_name: 'Commander' },
+          chat: { id: parseInt(USER_ID)||5953981409 }
+        }
       })
-    }).catch(() => {});
+    }).catch(e => slog('INBOUND fail: ' + e.message.slice(0,20)));
 
-    // Add to local state — appears on radar instantly
+    // Step 2: poll /items for the row that has our external_id (max 8 tries × 1.5s = 12s)
+    let assistantReply = null;
+    let classification = null;
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const polled = await apiFetch(API.ITEMS + '?source=tma_chat&external_id=' + encodeURIComponent(extId));
+        const items = (polled && polled.items) || [];
+        if (items.length > 0) {
+          const row = items[0];
+          let raw = {};
+          try { raw = JSON.parse(row.raw_json || '{}'); } catch(_) {}
+          if (raw.assistant_message) {
+            assistantReply = raw.assistant_message;
+            classification = { item_type: row.item_type, priority: row.priority, tags: row.tags_json };
+            break;
+          }
+        }
+      } catch(_) {}
+    }
+
+    aiTyping(false);
+
+    if (assistantReply) {
+      aiMsg('b', assistantReply, classification?.item_type ? { tag: classification.item_type.toUpperCase() } : null);
+      HN('success');
+    } else {
+      // Fallback: try /ai/classify just to get a classification + acknowledgement
+      try {
+        const c = await apiFetch(API.CLASSIFY, {
+          method: 'POST',
+          body: JSON.stringify({ content: contentText, source: 'tma_chat', user_id: USER_ID })
+        });
+        classification = c;
+        const fallback = c.summary || ('پیامت ثبت شد فرمانده — نوع: ' + (c.item_type||'note').toUpperCase() + '. پاسخ کامل از Cognitive Core در راهه. 🐺');
+        aiMsg('b', fallback, c.item_type ? { tag: c.item_type.toUpperCase() } : null);
+      } catch(_) {
+        aiMsg('b', 'پیامت ارسال شد فرمانده 🐺 (پاسخ Cognitive Core الان نیومد — رفرش کن تا بیاد)');
+      }
+    }
+
+    // Step 3: optimistic local add — appears on radar instantly
     if (text || aiAttachFile) {
       T.unshift({
         id: extId,
-        text: text || ('[' + attachmentMeta.type + '] ' + attachmentMeta.text),
-        type: classRes.item_type || (attachmentMeta.type || 'note'),
-        priority: classRes.priority || 'normal', done: false,
-        tags: parseTags(classRes.tags), ts: Date.now(),
+        text: contentText,
+        type: (classification?.item_type) || 'note',
+        priority: (classification?.priority) || 'normal',
+        done: false,
+        tags: parseTags(classification?.tags),
+        ts: Date.now(),
         source: 'tma_chat', external_id: extId,
         attachment_url: attachmentMeta.url,
         attachment_type: attachmentMeta.type,
@@ -1925,17 +1993,13 @@ async function aiSend() {
       renderAll(); rebuildB();
     }
 
-    HN('success');
-
   } catch(e) {
-    // Full offline fallback
     aiTyping(false);
-    aiMsg('b', '⚠️ سرور در دسترس نیست. پیام ذخیره شد و بعداً sync میشه.');
-    // Still save locally
+    aiMsg('b', '⚠️ خطای شبکه. پیام محلی ذخیره شد.');
     if (text) {
       T.unshift({
         id: extId, text, type: 'note', priority: 'normal', done: false,
-        tags: ['chat', 'offline'], ts: Date.now(), source: 'offline', external_id: extId
+        tags: ['chat','offline'], ts: Date.now(), source: 'offline', external_id: extId
       });
       renderAll(); rebuildB();
     }
