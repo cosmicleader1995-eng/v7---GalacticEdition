@@ -891,9 +891,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);color:var
           REMINDER SYS: <span class="ok">EVERY 10 MIN</span><br>
           AI GATEWAY: <span class="ok">ONLINE</span><br>
           TG BOT: <span class="ok">CONNECTED</span><br>
-          CORS PROXY: <span class="ok" id="proxy-status">corsproxy.io</span>
+          CORS PROXY: <span class="ok" id="proxy-status">auto-detecting...</span>
         </div>
         <button class="opb" style="margin-top:.7rem" onclick="diagnose(this)"><span>🔬 تست اتصال (Diagnose)</span><span class="opa">↗</span></button>
+        <button class="opb" style="margin-top:.4rem" onclick="setCustomProxy()"><span>🛡️ تنظیم Proxy شخصی (Cloudflare Worker)</span><span class="opa">↗</span></button>
       </div>
     </div>
   </div>
@@ -1054,30 +1055,80 @@ let T=[], CF='all', loaded=false;
    This covers our deployment (GitHub Pages). */
 
 const PROXIES = [
-  // Primary: corsproxy.io — works for github.io without an API key
+  // 1. AllOrigins — old, Cloudflare-free, generally accessible from anywhere
+  {
+    name: 'allorigins',
+    build: (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  },
+  // 2. cors.sh — public Cloudflare worker (different infra from corsproxy.io)
+  {
+    name: 'corssh',
+    build: (url) => 'https://proxy.cors.sh/' + url,
+  },
+  // 3. corsproxy.io — works for github.io
   {
     name: 'corsproxy.io',
     build: (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
   },
-  // Fallback 1: killcors.com — no account, no rate limit
+  // 4. thingproxy — independent infrastructure
   {
-    name: 'killcors',
-    build: (url) => 'https://proxy.killcors.com/?url=' + encodeURIComponent(url),
+    name: 'thingproxy',
+    build: (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
   },
-  // Fallback 2: codetabs.com — older but still alive
+  // 5. codetabs
   {
     name: 'codetabs',
     build: (url) => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url),
   },
-  // Last resort: direct (will only work if n8n CORS is somehow configured server-side)
+  // 6. cors-anywhere demo (often rate-limited but free)
+  {
+    name: 'cors-anywhere',
+    build: (url) => 'https://cors-anywhere.herokuapp.com/' + url,
+  },
+  // 7. last resort: direct (works only if n8n CORS is set correctly or if from same-origin)
   {
     name: 'direct',
     build: (url) => url,
   },
 ];
 
-// Remember which proxy worked last so we don't keep retrying broken ones
+// Remember the working proxy across reloads via localStorage
 let WORKING_PROXY_IDX = 0;
+try {
+  const saved = parseInt(localStorage.getItem('lifeops_proxy_idx') || '0', 10);
+  if (saved >= 0 && saved < PROXIES.length) WORKING_PROXY_IDX = saved;
+} catch(_) {}
+
+// Load custom proxy URL (Cloudflare Worker) from storage and prepend to PROXIES
+try {
+  const customUrl = localStorage.getItem('lifeops_custom_proxy');
+  if (customUrl && customUrl.startsWith('http')) {
+    PROXIES.unshift({
+      name: 'custom',
+      build: (url) => customUrl.replace(/\/+$/, '') + '/?url=' + encodeURIComponent(url),
+    });
+    WORKING_PROXY_IDX = 0; // try custom first
+  }
+} catch(_) {}
+
+function setCustomProxy() {
+  const current = (() => { try { return localStorage.getItem('lifeops_custom_proxy') || ''; } catch(_) { return ''; } })();
+  const url = prompt(
+    'URL یک Cloudflare Worker یا proxy شخصی بزن (مثلا https://my-worker.your-account.workers.dev).\n' +
+    'این Proxy باید با pattern /?url=<target> کار کنه.\n\n' +
+    'برای پاک کردن، خالی بفرست.\n\n' +
+    'کد آماده Worker در README دسترس هست.',
+    current
+  );
+  if (url === null) return;
+  if (url === '') {
+    try { localStorage.removeItem('lifeops_custom_proxy'); } catch(_) {}
+    toast('🗑️ Proxy شخصی پاک شد. ریفرش کن.', '', 3000);
+    return;
+  }
+  try { localStorage.setItem('lifeops_custom_proxy', url.trim()); } catch(_) {}
+  toast('✅ Proxy شخصی ست شد. ریفرش کن تا فعال بشه.', 'ok', 3500);
+}
 
 async function apiFetch(url, opts={}){
   const method = (opts.method || 'GET').toUpperCase();
@@ -1085,23 +1136,19 @@ async function apiFetch(url, opts={}){
   if ((method === 'POST' || method === 'PUT') && typeof opts.body === 'string') {
     if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
   }
-  // Try the proxy that worked last time first, then the others in order
   const order = [WORKING_PROXY_IDX, ...PROXIES.map((_, i) => i).filter(i => i !== WORKING_PROXY_IDX)];
   let lastErr = null;
   for (const idx of order) {
     const proxy = PROXIES[idx];
     const proxiedUrl = proxy.build(url);
     try {
-      const r = await fetch(proxiedUrl, {
-        method, headers, body: opts.body, mode: 'cors',
-        // Cache: 'no-store' avoids stale proxy responses on repeated GET to /items
-        cache: 'no-store',
-      });
-      if (!r.ok) {
-        lastErr = new Error(`HTTP ${r.status} via ${proxy.name}`);
-        continue;
-      }
-      WORKING_PROXY_IDX = idx; // remember the winner
+      const r = await Promise.race([
+        fetch(proxiedUrl, { method, headers, body: opts.body, mode: 'cors', cache: 'no-store' }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+      ]);
+      if (!r.ok) { lastErr = new Error('HTTP ' + r.status + ' via ' + proxy.name); continue; }
+      WORKING_PROXY_IDX = idx;
+      try { localStorage.setItem('lifeops_proxy_idx', String(idx)); } catch(_) {}
       const ct = r.headers.get('content-type') || '';
       if (ct.includes('json')) return await r.json();
       const txt = await r.text();
@@ -1111,6 +1158,26 @@ async function apiFetch(url, opts={}){
     }
   }
   throw lastErr || new Error('All CORS proxies failed');
+}
+
+/* ══ FIRE-AND-FORGET POST — last-ditch reliability for writes ══
+   When all CORS proxies fail, we can still WRITE data to n8n by using
+   the browser's no-cors mode. We can't read the response, but the request
+   is delivered. This means: at minimum, the data lands in Sheets even if
+   the assistant can't show a reply. Used as a fallback for POST. */
+async function fireAndForgetPost(url, jsonBody) {
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, // simple request, no preflight
+      body: jsonBody,
+      keepalive: true,
+    });
+    return { ok: true, opaque: true };
+  } catch(e) {
+    throw e;
+  }
 }
 
 /* ══ LOAD LIVE — reads from Second Brain v3 (Google Sheets via n8n) ══ */
@@ -1460,32 +1527,35 @@ async function doCapture(){
       } catch(_) {}
     }
   } catch(e) {
-    // Fallback: try classify + items directly
-    slog('INBOUND fail: ' + e.message.slice(0,25) + ' — trying classify+items');
+    // ▶ ALL CORS PROXIES FAILED — last-ditch: fire-and-forget no-cors POST
+    // This delivers the message to n8n even though we can't read the response.
+    // The Telegram bot will reply (which is what worked before).
+    slog('INBOUND via proxies failed; falling back to no-cors POST');
     try {
-      const r = await apiFetch(API.CLASSIFY, {
-        method: 'POST',
-        body: JSON.stringify({ content: val, source: 'tma', user_id: USER_ID })
-      });
-      newT.type = r.item_type || 'note';
-      newT.priority = r.priority || 'normal';
-      newT.tags = parseTags(r.tags);
-      await apiFetch(API.ITEMS, {
+      await fireAndForgetPost(API.INBOUND, JSON.stringify(payload));
+      toast('📡 فقط بات پاسخ می‌ده (CORS بسته)', '', 3000);
+      setAI('پیامت رفت فرمانده. CORS proxy fail شد — پاسخ از طریق بات تلگرام میاد. 🐺');
+      // Also try a fire-and-forget /items so the row exists
+      apiFetch(API.ITEMS, {
         method: 'POST',
         body: JSON.stringify({
           source: 'tma', external_id: extId, content: val,
           author: USER_ID, created_at: new Date().toISOString(),
-          item_type: newT.type, priority: newT.priority, tags: newT.tags,
+          item_type: 'note', priority: 'normal', tags: ['fallback'],
           attachment_url:'', attachment_type:'', attachment_size:0, attachment_text:'',
-          raw: { via: 'capture_fallback' }
+          raw: { via: 'no_cors_fallback' }
         })
+      }).catch(()=> {
+        // even apiFetch failed — try fire-and-forget here too
+        fireAndForgetPost(API.ITEMS, JSON.stringify({
+          source:'tma', external_id:extId, content:val, author:USER_ID,
+          created_at: new Date().toISOString(), item_type:'note', priority:'normal',
+          tags:['fallback','no_cors'], raw:{ via:'no_cors_items' }
+        })).catch(()=>{});
       });
-      setAI('ثبت شد فرمانده (' + newT.type.toUpperCase() + '). 🐺');
-      toast('💾 ذخیره شد', 'ok');
-      renderAll(); rebuildB();
-    } catch(e2) {
-      toast('⚠️ فقط محلی ذخیره شد', '', 2500);
-      setAI('فعلاً محلی ذخیره شد. وقتی شبکه برگرده sync میشه. 🐺');
+    } catch(_) {
+      toast('⚠️ فقط محلی ذخیره شد — شبکه بلاکه', 'err', 3000);
+      setAI('شبکه بلاکه. آیتم محلی ذخیره شد ولی به سرور نرسید. VPN رو چک کن. 🐺');
     }
   }
 
@@ -1572,8 +1642,15 @@ async function hmed(inp, mtype) {
     slog('UPLOAD OK: ' + f.name.slice(0,25) + ' (' + sizeKB + 'KB)');
     renderAll(); rebuildB();
   } catch(e) {
-    toast('❌ آپلود ناکام: ' + e.message.slice(0,18), 'err');
-    slog('UPLOAD FAIL: ' + e.message.slice(0,30));
+    // Fallback: fire-and-forget so at least Sheets gets the row
+    try {
+      await fireAndForgetPost(API.ITEMS, JSON.stringify(payload));
+      toast('📡 ' + f.name.slice(0,20) + ' فرستاده شد (no-cors)', '', 2800);
+      slog('UPLOAD via no-cors: ' + f.name.slice(0,25));
+    } catch(e2) {
+      toast('❌ آپلود ناکام: ' + e.message.slice(0,18), 'err');
+      slog('UPLOAD FAIL: ' + e.message.slice(0,30));
+    }
   }
 }
 
@@ -1776,72 +1853,112 @@ async function opSync(btn) {
   toast('\ud83d\udd04 \u0647\u0645\u06af\u0627\u0645\u200c\u0633\u0627\u0632\u06cc \u06a9\u0627\u0645\u0644', 'ok');
 }
 
-/* ══ DIAGNOSE — tests each CORS proxy against the live n8n endpoint ══
+/* ══ DIAGNOSE — tests each CORS proxy IN PARALLEL against the live n8n endpoint ══
    Shows exactly which proxy works and reports the first row from /items.
-   This is the truth-teller: if all four fail, the issue is server-side. */
+   This is the truth-teller: if all fail, the issue is server-side or network-level. */
 async function diagnose(btn) {
   if (btn.classList.contains('loading')) return;
   btn.classList.add('loading');
   H('medium');
-  openRp('🔬 Diagnostic Report', 'در حال اجرای تست‌ها...\n\n');
+  openRp('🔬 Diagnostic Report', 'در حال اجرای ' + PROXIES.length + ' تست به موازات...\nهر کدوم تا ۱۰ ثانیه time-out داره.\n\n⏳ صبر کن...');
 
-  const lines = ['🔬 LifeOps Connectivity Diagnostic', '────────────────────────────────', ''];
   const testUrl = N8N + '/items?since_hours=24';
 
-  for (let i = 0; i < PROXIES.length; i++) {
-    const proxy = PROXIES[i];
-    const proxied = proxy.build(testUrl);
-    const startMs = Date.now();
-    let ok = false, status = '', error = '', rowCount = '?';
-    try {
-      const r = await fetch(proxied, { method: 'GET', mode: 'cors', cache: 'no-store' });
-      status = 'HTTP ' + r.status;
-      if (r.ok) {
-        const txt = await r.text();
-        try {
-          const j = JSON.parse(txt);
-          rowCount = Array.isArray(j.items) ? j.items.length : (Array.isArray(j) ? j.length : 0);
-          ok = true;
-        } catch(_) { error = 'non-JSON response'; }
-      } else {
-        error = 'bad status';
-      }
-    } catch(e) {
-      error = e.message.slice(0, 60);
-    }
-    const ms = Date.now() - startMs;
-    const icon = ok ? '✅' : '❌';
-    lines.push(icon + ' ' + proxy.name.padEnd(14) + ' | ' + status.padEnd(10) + ' | ' + ms + 'ms');
-    if (ok) lines.push('     └─ rows returned: ' + rowCount);
-    if (error) lines.push('     └─ error: ' + error);
-    document.getElementById('rp-body').textContent = lines.join('\n');
+  // First test: a sanity check against a known-good public API to verify network works at all
+  let networkOk = true;
+  let networkErr = '';
+  try {
+    const r = await Promise.race([
+      fetch('https://api.github.com/zen', { method: 'GET', cache: 'no-store' }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+    ]);
+    if (!r.ok) { networkOk = false; networkErr = 'HTTP ' + r.status; }
+  } catch(e) {
+    networkOk = false;
+    networkErr = e.message.slice(0, 50);
   }
 
-  lines.push('');
-  lines.push('────────────────────────────────');
-  lines.push('📊 خلاصه:');
+  // Run all proxy tests in parallel with timeout
+  const testProxy = async (proxy) => {
+    const proxied = proxy.build(testUrl);
+    const start = Date.now();
+    try {
+      const r = await Promise.race([
+        fetch(proxied, { method: 'GET', mode: 'cors', cache: 'no-store' }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout (10s)')), 10000))
+      ]);
+      const ms = Date.now() - start;
+      if (!r.ok) return { proxy, ok: false, status: 'HTTP ' + r.status, ms, error: 'bad status' };
+      const txt = await r.text();
+      let rows = '?';
+      try {
+        const j = JSON.parse(txt);
+        rows = Array.isArray(j.items) ? j.items.length : (Array.isArray(j) ? j.length : 0);
+      } catch(_) {
+        return { proxy, ok: false, status: 'HTTP 200', ms, error: 'non-JSON response (text was: ' + txt.slice(0,30) + '...)' };
+      }
+      return { proxy, ok: true, status: 'HTTP 200', ms, rows };
+    } catch(e) {
+      return { proxy, ok: false, status: '—', ms: Date.now() - start, error: e.message.slice(0, 70) };
+    }
+  };
 
-  const workingProxy = PROXIES[WORKING_PROXY_IDX];
-  lines.push('  Proxy فعال: ' + workingProxy.name);
-  lines.push('  وضعیت داده‌ها: ' + (T.length > 0 ? T.length + ' آیتم لود شده' : 'هیچ آیتمی'));
-  lines.push('  Browser: ' + (navigator.userAgent.includes('Telegram') ? 'Telegram WebApp' : 'Standard browser'));
-  lines.push('  Origin: ' + (location.origin || 'file://'));
+  const results = await Promise.all(PROXIES.map(testProxy));
+
+  // Find first working proxy and remember it
+  const firstWorking = results.findIndex(r => r.ok);
+  if (firstWorking >= 0) {
+    WORKING_PROXY_IDX = firstWorking;
+    try { localStorage.setItem('lifeops_proxy_idx', String(firstWorking)); } catch(_) {}
+  }
+
+  // Build report
+  const lines = [];
+  lines.push('🔬 LifeOps Connectivity Diagnostic');
+  lines.push('════════════════════════════════════');
+  lines.push('');
+  lines.push('🌐 Network test (api.github.com):');
+  lines.push('   ' + (networkOk ? '✅ شبکه فعاله' : '❌ شبکه قطعه: ' + networkErr));
+  lines.push('');
+  lines.push('🔗 Proxy tests (' + PROXIES.length + ' total):');
+  for (const r of results) {
+    const icon = r.ok ? '✅' : '❌';
+    const name = r.proxy.name.padEnd(14, ' ');
+    lines.push(icon + ' ' + name + '| ' + r.status.padEnd(10, ' ') + '| ' + r.ms + 'ms');
+    if (r.ok) lines.push('   └─ ' + r.rows + ' رکورد دریافت شد');
+    if (r.error) lines.push('   └─ خطا: ' + r.error);
+  }
+  lines.push('');
+  lines.push('════════════════════════════════════');
+  lines.push('📊 خلاصه:');
+  const okCount = results.filter(r => r.ok).length;
+  lines.push('   ' + okCount + ' از ' + PROXIES.length + ' proxy جواب می‌ده');
+  if (okCount > 0) {
+    lines.push('   ✓ Proxy فعال: ' + PROXIES[WORKING_PROXY_IDX].name);
+  }
+  lines.push('   آیتم‌های لود شده: ' + T.length);
+  lines.push('   Browser: ' + (window.Telegram?.WebApp ? 'Telegram Mini App' : 'Standard'));
+  lines.push('   Origin: ' + (location.origin || 'file://'));
   lines.push('');
   lines.push('🔧 پیشنهاد:');
-  const anyOk = lines.some(l => l.startsWith('✅'));
-  if (anyOk) {
-    lines.push('  ✓ حداقل یک proxy کار می‌کنه. اپ آماده‌ست.');
+  if (!networkOk) {
+    lines.push('   ⚠️ اینترنت اصلاً کار نمی‌کنه. VPN رو چک کن.');
+  } else if (okCount === 0) {
+    lines.push('   ⚠️ شبکه فعاله ولی همه‌ی proxyها بلاک شدن.');
+    lines.push('   احتمالاً:');
+    lines.push('     • ISP این سرویس‌ها رو فیلتر کرده');
+    lines.push('     • Telegram Mini App با CSP محدود کرده');
+    lines.push('     • همه proxyها از ایران بلاک شدن');
+    lines.push('   راه‌حل: یه VPN فعال کن یا یک Cloudflare Worker شخصی بساز.');
+    lines.push('   فعلاً اپ به حالت محلی (offline-write) کار می‌کنه.');
   } else {
-    lines.push('  ✗ هیچ proxy کار نمی‌کنه. احتمالا:');
-    lines.push('    1) شبکه قطعه');
-    lines.push('    2) n8n cloud orca-9595 down هست');
-    lines.push('    3) Origin شما در whitelist proxy نیست');
-    lines.push('  راه‌حل: یک backend ساده برای پراکسی بساز');
+    lines.push('   ✓ اپ آماده‌ست. روی رادار آیتم‌ها میان.');
   }
 
   openRp('🔬 Diagnostic Report', lines.join('\n'));
   btn.classList.remove('loading');
-  document.getElementById('proxy-status').textContent = workingProxy.name;
+  const psEl = document.getElementById('proxy-status');
+  if (psEl) psEl.textContent = PROXIES[WORKING_PROXY_IDX]?.name || '?';
 }
 
 function openModal() {
@@ -1907,8 +2024,19 @@ async function submitReminder() {
       slog('REMINDER SAVED: ' + text.slice(0,30));
     }
   } catch(e) {
-    toast('\u26a0\ufe0f \u06cc\u0627\u062f\u0622\u0648\u0631 \u0641\u0642\u0637 \u0645\u062d\u0644\u06cc \u0630\u062e\u06cc\u0631\u0647 \u0634\u062f');
-    slog('REMINDER FAIL: ' + e.message.slice(0,30));
+    // Fallback to fire-and-forget so reminder still gets to n8n + bot still notifies
+    const reminderBody = JSON.stringify({
+      user_id: USER_ID, reminder_text: text, datetime: dtObj.toISOString(),
+      priority: prio, source: 'tma'
+    });
+    try {
+      await fireAndForgetPost(API.REMINDER, reminderBody);
+      toast('📡 یادآور با no-cors ارسال شد', '', 2800);
+      slog('REMINDER via no-cors: ' + text.slice(0,25));
+    } catch(_) {
+      toast('⚠️ یادآور فقط محلی ذخیره شد');
+      slog('REMINDER FAIL: ' + e.message.slice(0,30));
+    }
   }
   document.getElementById('rem-text').value = '';
 }
