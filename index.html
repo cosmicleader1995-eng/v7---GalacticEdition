@@ -1254,15 +1254,15 @@ async function loadLive(){
     const av = localStorage.getItem('lifeops_avatar');
     if (av) document.getElementById('uav').innerHTML = `<img src="${av}">`;
   } catch(_) {}
-  slog('SYNC → orca-9595 Sheets...');
+  slog('SYNC → orca-9595 Sheets (last 7 days)...');
   try {
-    // Second Brain v3 GET /items?since_hours=720 (30 days)
-    const d = await apiFetch(API.ITEMS + '?since_hours=720');
+    // ▶ Window: last 7 days (168 hours). Previously 720h (30 days) → too noisy.
+    const d = await apiFetch(API.ITEMS + '?since_hours=168');
     let arr = unwrapItems(d);
     slog('PARSED: ' + arr.length + ' rows from response');
 
     if (arr.length > 0) {
-      // Filter out invalid rows: missing id, header rows (id === 'id'), or completely empty content
+      // Filter out invalid rows + archived items
       arr = arr.filter(it => {
         if (!it || !it.id) return false;
         if (String(it.id).toLowerCase() === 'id') return false; // header row
@@ -1271,6 +1271,9 @@ async function loadLive(){
         const hasContent = it.content && String(it.content).trim().length > 0;
         const hasAttachment = it.attachment_url && String(it.attachment_url).length > 0;
         if (!hasContent && !hasAttachment) return false;
+        // Skip archived items (purged via OPS "clean done") — hidden from UI forever
+        const tagStr = String(it.tags_json || it.tags || '');
+        if (tagStr.includes('archived')) return false;
         return true;
       });
 
@@ -1286,19 +1289,24 @@ async function loadLive(){
       // Sort by created_at descending — newest first
       arr.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0));
 
-      T = arr.map(it => ({
-        id:              it.id || String(Date.now() + Math.random()),
-        text:            it.content || '',
-        type:            it.item_type || 'note',
-        priority:        it.priority || 'normal',
-        done:            (it.status === 'done'),
-        tags:            parseTags(it.tags_json || it.tags),
-        ts:              new Date(it.created_at || Date.now()).getTime(),
-        external_id:     it.external_id || String(it.id || ''),
-        source:          it.source || 'sheet',
-        attachment_url:  it.attachment_url  || '',
-        attachment_type: it.attachment_type || '',
-      }));
+      T = arr.map(it => {
+        const tags = parseTags(it.tags_json || it.tags);
+        // `done` is derived from the synthetic 'done' tag (no status column in sheet)
+        const isDone = tags.includes('done');
+        return {
+          id:              it.id || String(Date.now() + Math.random()),
+          text:            it.content || '',
+          type:            it.item_type || 'note',
+          priority:        it.priority || 'normal',
+          done:            isDone,
+          tags:            tags,
+          ts:              new Date(it.created_at || Date.now()).getTime(),
+          external_id:     it.external_id || String(it.id || ''),
+          source:          it.source || 'sheet',
+          attachment_url:  it.attachment_url  || '',
+          attachment_type: it.attachment_type || '',
+        };
+      });
       loaded = true;
       updateSysStatus('ok', 'ACTIVE ✓ (' + T.length + ' رکورد)');
       slog('LOADED: ' + T.length + ' ITEMS FROM SHEETS');
@@ -1465,11 +1473,17 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* FIX tog: all item types, dopamine burst, syncs via PUT to Second Brain */
+/* FIX tog: all item types, dopamine burst, syncs via PUT to Second Brain.
+   IMPORTANT: The Sheet has NO 'status' column. We persist `done` state by
+   adding/removing the synthetic tag 'done' in tags_json. On next loadLive,
+   any item whose tags contain 'done' is treated as completed. */
 function tog(id) {
   const t = T.find(x => x.id === id);
   if (!t) return;
   t.done = !t.done;
+  // Sync done state into the tags array — this is what persists across reloads
+  const baseTags = (t.tags || []).filter(x => x !== 'done');
+  t.tags = t.done ? [...baseTags, 'done'] : baseTags;
   H('medium');
   renderM(); refreshS(); rebuildB();
   if (t.done) {
@@ -2138,11 +2152,51 @@ function opClassifyModal(btn){
     });
 }
 
-function opClr(){
-  const before=T.length;
-  T=T.filter(t=>!t.done);
-  toast(`🗑️ ${before-T.length} ماموریت پاک شد`,'ok'); H('heavy');
+async function opClr(){
+  const doneItems = T.filter(t => t.done);
+  if (doneItems.length === 0) {
+    toast('هیچ ماموریت تموم‌شده‌ای نیست', '', 2200);
+    return;
+  }
+  H('heavy');
+  toast('🗑️ پاکسازی ' + doneItems.length + ' ماموریت...', '', 2000);
+
+  // ▶ Persist archive state to server BEFORE removing from local list.
+  // We add the 'archived' tag — loadLive filters items with this tag.
+  // Done in parallel for speed; failures are logged but not blocking.
+  const archivePromises = doneItems
+    .filter(t => t.source !== 'demo' && t.id && !String(t.id).startsWith('l') && !String(t.id).startsWith('d'))
+    .map(t => {
+      const archivedTags = [...new Set([...(t.tags || []).filter(x => x !== 'done'), 'archived'])];
+      return apiFetch(API.ITEMS + '/' + t.id, {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: t.id, source: t.source || 'tma',
+          external_id: t.external_id || t.id,
+          content: t.text, author: USER_ID,
+          created_at: new Date(t.ts).toISOString(),
+          item_type: t.type, priority: t.priority,
+          tags: archivedTags,
+          attachment_url: t.attachment_url || '',
+          attachment_type: t.attachment_type || '',
+          attachment_size: 0, attachment_text: '',
+          updated_at: new Date().toISOString()
+        })
+      }).catch(e => {
+        slog('ARCHIVE FAIL ' + t.id + ': ' + e.message.slice(0,18));
+        return null;
+      });
+    });
+
+  // Remove locally — instant UX feedback
+  const before = T.length;
+  T = T.filter(t => !t.done);
   renderAll(); rebuildB();
+
+  // Wait for archive PUTs in background
+  const results = await Promise.all(archivePromises);
+  const okCount = results.filter(r => r !== null).length;
+  toast('✅ ' + (before - T.length) + ' ماموریت پاک شد (' + okCount + ' در سرور آرشیو شد)', 'ok', 3000);
 }
 
 /* ══ PROFILE ══ */
