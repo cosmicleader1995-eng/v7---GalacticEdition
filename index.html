@@ -1180,6 +1180,73 @@ async function fireAndForgetPost(url, jsonBody) {
   }
 }
 
+/* ══ IMAGE COMPRESSION — fit images under Sheets 50K char limit ══
+   Browser-side resize + quality reduction so base64 fits in a cell.
+   Iteratively reduces width and JPEG quality until the result is under target. */
+async function compressImage(file, maxBase64Bytes) {
+  // Load image into a canvas
+  const img = await new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => { URL.revokeObjectURL(url); resolve(im); };
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image load')); };
+    im.src = url;
+  });
+
+  // Iteratively shrink + reduce quality until under target
+  // Base64 size ≈ rawBytes * 1.37 + data-url-prefix overhead
+  const targetRawBytes = Math.floor(maxBase64Bytes * 0.7); // safety margin
+
+  const widths = [1200, 900, 700, 540, 400, 320, 240];
+  const qualities = [0.78, 0.65, 0.5, 0.4, 0.32];
+
+  for (const w of widths) {
+    if (img.width <= w * 0.6) continue; // already smaller, skip this width
+    const ratio = Math.min(1, w / img.width);
+    const cw = Math.round(img.width * ratio);
+    const ch = Math.round(img.height * ratio);
+    const canvas = document.createElement('canvas');
+    canvas.width = cw; canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, cw, ch);
+
+    for (const q of qualities) {
+      const dataUrl = canvas.toDataURL('image/jpeg', q);
+      // dataUrl.length is roughly the bytes-in-string
+      if (dataUrl.length <= maxBase64Bytes) {
+        return { dataUrl, size: dataUrl.length, width: cw, height: ch, quality: q };
+      }
+    }
+  }
+
+  // Final attempt: tiny + ultra-low quality
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = Math.round(200 * img.height / img.width);
+  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.25);
+  if (dataUrl.length <= maxBase64Bytes) {
+    return { dataUrl, size: dataUrl.length, width: canvas.width, height: canvas.height, quality: 0.25 };
+  }
+  return null;
+}
+
+/* ══ UNWRAP n8n response shapes ══
+   n8n's Respond-to-Webhook with "respondWith: allIncomingItems" wraps the
+   result in a top-level array. We normalize all possible shapes into a flat
+   array of rows. Used by every reader of /items. */
+function unwrapItems(d) {
+  if (!d) return [];
+  let payload = d;
+  if (Array.isArray(payload) && payload.length > 0 && payload[0] && typeof payload[0] === 'object') {
+    if (Array.isArray(payload[0].items)) return payload[0].items;
+    if (payload[0].id || payload[0].content || payload[0].source) return payload;
+  }
+  if (payload && Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload)) return payload;
+  return [];
+}
+
 /* ══ LOAD LIVE — reads from Second Brain v3 (Google Sheets via n8n) ══ */
 async function loadLive(){
   // Restore stored avatar if any
@@ -1190,17 +1257,9 @@ async function loadLive(){
   slog('SYNC → orca-9595 Sheets...');
   try {
     // Second Brain v3 GET /items?since_hours=720 (30 days)
-    // Returns { found, items, existing_id }
     const d = await apiFetch(API.ITEMS + '?since_hours=720');
-
-    let arr = [];
-    if (d && Array.isArray(d.items) && d.items.length > 0) {
-      arr = d.items;
-    } else if (d && d.found === true && Array.isArray(d.items)) {
-      arr = d.items;
-    } else if (Array.isArray(d) && d.length > 0) {
-      arr = d;
-    }
+    let arr = unwrapItems(d);
+    slog('PARSED: ' + arr.length + ' rows from response');
 
     if (arr.length > 0) {
       // Filter out invalid rows: missing id, header rows (id === 'id'), or completely empty content
@@ -1508,7 +1567,7 @@ async function doCapture(){
       await new Promise(r => setTimeout(r, 1500));
       try {
         const polled = await apiFetch(API.ITEMS + '?source=tma&external_id=' + encodeURIComponent(extId));
-        const items = (polled && polled.items) || [];
+        const items = unwrapItems(polled);
         if (items.length > 0) {
           const row = items[0];
           let raw = {};
@@ -1585,13 +1644,37 @@ async function hmed(inp, mtype) {
   renderAll(); rebuildB();
   toast('📤 خواندن فایل ' + sizeKB + ' KB...', '', 2000);
 
-  // Read file as base64 data URL (data:mime;base64,xxx). Keep inline only if small.
-  // n8n + Sheets can choke on huge base64 strings; cap at 2 MB for safety.
-  const MAX_INLINE_SIZE = 2 * 1024 * 1024;
+  // ▶ CRITICAL: Google Sheets has a 50,000-character limit per cell.
+  // base64 encoding inflates data ~33%, so anything >35KB original size will exceed.
+  // STRATEGY:
+  //   - Images: auto-compress in browser to fit under 30KB (good quality at 800px+JPEG~0.7)
+  //   - Audio/video/docs <30KB: embed as base64
+  //   - Larger non-image: save metadata only (filename, size, mime)
+  const MAX_INLINE_SIZE = 30 * 1024; // 30KB — safely under the 50K cell limit
   let b64data = '';
   let attachUrl = '';
+  let savedInline = false;
+  let compressedNote = '';
 
-  if (f.size <= MAX_INLINE_SIZE) {
+  // For images, try compression first
+  if (mtype === 'image' && f.type.startsWith('image/') && f.size > MAX_INLINE_SIZE) {
+    toast('🖼️ فشرده‌سازی عکس...', '', 1800);
+    try {
+      const compressed = await compressImage(f, MAX_INLINE_SIZE);
+      if (compressed) {
+        b64data = compressed.dataUrl;
+        attachUrl = b64data;
+        savedInline = true;
+        compressedNote = ' (فشرده شد: ' + Math.round(compressed.size/1024) + 'KB)';
+        slog('IMG compressed: ' + sizeKB + 'KB → ' + Math.round(compressed.size/1024) + 'KB');
+      }
+    } catch(e) {
+      slog('IMG compress fail: ' + e.message);
+    }
+  }
+
+  // For everything else (or if compression failed), embed if small
+  if (!savedInline && f.size <= MAX_INLINE_SIZE) {
     try {
       b64data = await new Promise((res, rej) => {
         const reader = new FileReader();
@@ -1600,17 +1683,20 @@ async function hmed(inp, mtype) {
         reader.readAsDataURL(f);
       });
       attachUrl = b64data;
+      savedInline = true;
     } catch(e) {
       slog('FILE READ ERR: ' + e.message);
     }
-  } else {
-    toast('⚠️ فایل > 2MB — فقط متادیتا ذخیره میشه', '', 3000);
+  } else if (!savedInline) {
+    // Too large for Sheets cell, no compression possible — metadata only
+    toast('⚠️ فایل بزرگه (' + sizeKB + 'KB) — فقط متادیتا ذخیره میشه', '', 3500);
+    slog('FILE too big for sheets cell: ' + sizeKB + 'KB');
   }
 
   const payload = {
     source:          'tma',
     external_id:     extId,
-    content:         contentText,
+    content:         contentText + compressedNote,
     author:          USER_ID,
     created_at:      new Date().toISOString(),
     item_type:       itemType,
@@ -1625,7 +1711,8 @@ async function hmed(inp, mtype) {
       filename: f.name,
       size: f.size,
       mime: f.type,
-      has_data: b64data.length > 0
+      has_data: b64data.length > 0,
+      compressed: compressedNote ? true : false
     }
   };
 
@@ -1729,8 +1816,7 @@ async function opDaily(btn) {
     // Step 1: fetch last 24h from Sheets
     const d = await apiFetch(API.ITEMS + '?since_hours=24');
     let items = [];
-    if (d && Array.isArray(d.items)) items = d.items;
-    else if (Array.isArray(d)) items = d;
+    items = unwrapItems(d);
     slog('DAILY: fetched ' + items.length + ' items from Sheets');
 
     // Step 2: send to AI summarize (ai/summarize webhook)
@@ -1774,8 +1860,7 @@ async function opWeekly(btn) {
   try {
     const d = await apiFetch(API.ITEMS + '?since_hours=168');
     let items = [];
-    if (d && Array.isArray(d.items)) items = d.items;
-    else if (Array.isArray(d)) items = d;
+    items = unwrapItems(d);
     slog('WEEKLY: fetched ' + items.length + ' items');
 
     const sumRes = await apiFetch(API.SUMMARY, {
@@ -1814,8 +1899,7 @@ async function opScout(btn) {
     // Fetch 24h tasks from Sheets
     const d = await apiFetch(API.ITEMS + '?since_hours=24');
     let items = [];
-    if (d && Array.isArray(d.items)) items = d.items;
-    else if (Array.isArray(d)) items = d;
+    items = unwrapItems(d);
 
     const tasks = items.filter(it => (it.item_type||it.type) === 'task');
     slog('SCOUT: ' + tasks.length + ' tasks in 24h');
@@ -2219,7 +2303,7 @@ async function aiSend() {
       await new Promise(r => setTimeout(r, 1500));
       try {
         const polled = await apiFetch(API.ITEMS + '?source=tma_chat&external_id=' + encodeURIComponent(extId));
-        const items = (polled && polled.items) || [];
+        const items = unwrapItems(polled);
         if (items.length > 0) {
           const row = items[0];
           let raw = {};
@@ -2397,8 +2481,7 @@ async function pollBotMessages() {
     const sinceHours = Math.max(0.1, (Date.now() - lastPollTs) / 3600000 + 0.05).toFixed(3);
     const d = await apiFetch(API.ITEMS + '?since_hours=' + sinceHours);
     let arr = [];
-    if (d && Array.isArray(d.items)) arr = d.items;
-    else if (Array.isArray(d)) arr = d;
+    arr = unwrapItems(d);
 
     let newMsgs = 0;
     arr.forEach(it => {
